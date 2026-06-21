@@ -1,0 +1,11 @@
+name = "Final_Project"
+version = "0.1.0"
+defaultTargets = ["Final_Project"]
+
+[[lean_lib]]
+name = "Final_Project"
+root = "Final_Project"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
