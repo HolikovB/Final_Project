@@ -108,7 +108,7 @@ def invTransposeAutSL3 : AutSL3 R where
     Matrix.SpecialLinearGroup.coe_inv
     ]
     rw [← Matrix.adjugate_transpose]
-    simp only [Matrix.transpose_transpose]
+    simp
     rw [Matrix.adjugate_adjugate _ (by decide)]
     simp [x.property]
 
@@ -121,7 +121,7 @@ def invTransposeAutSL3 : AutSL3 R where
     Matrix.SpecialLinearGroup.coe_inv
     ]
     rw [← Matrix.adjugate_transpose]
-    simp only [Matrix.transpose_transpose]
+    simp
 
     rw [Matrix.adjugate_adjugate _ (by decide)]
     simp [x.property]
@@ -236,8 +236,7 @@ theorem w_preserved
             have: (d3SL F) * (w1SL F) * (d3SL F) = w1SL F := by
               have: (d3 F) * (w1 F) * (d3 F) = w1 F := by
                 rw [w1, d3, diagonal_fin_three, mul_fin_three, mul_fin_three]
-                simp only [cons_val, mul_zero, mul_neg, mul_one, neg_zero, add_zero, neg_neg,
-                          zero_add]
+                simp
               apply Subtype.ext this
             rw [this]
           rw [map_mul, map_mul, map_mul, map_mul, hd3] at this
@@ -246,12 +245,9 @@ theorem w_preserved
           exact ext fun i => congrFun rfl
         rw [d3, diagonal_fin_three] at this
         nth_rw 10 [← this, eta_fin_three v1]
-        simp only [cons_val, cons_mul, vecMul_cons, head_cons, one_smul, tail_cons, zero_smul,
-                   empty_vecMul, add_zero, neg_smul, neg_cons, zero_add, empty_mul,
-                   Equiv.symm_apply_apply, smul_cons, smul_eq_mul, mul_one, mul_zero, mul_neg,
-                   add_cons, empty_add_empty, neg_zero, neg_neg]
+        simp
       ext i j
-      fin_cases i <;> fin_cases j <;> simp only [Fin.reduceFinMk, of_apply, cons_val]
+      fin_cases i <;> fin_cases j <;> simp
       · exact (zero_iff_eq_neg_self _).mpr (this 0 2).symm
       · exact (zero_iff_eq_neg_self _).mpr (this 1 2).symm
       · exact (zero_iff_eq_neg_self _).mpr (this 2 0).symm
@@ -267,8 +263,7 @@ theorem w_preserved
             have: (w1SL F) * (d1SL F) = (d2SL F) * (w1SL F) := by
               have: (w1 F) * (d1 F) = (d2 F) * (w1 F) := by
                 rw [w1, d1, d2, diagonal_fin_three, diagonal_fin_three]
-                simp only [cons_val, cons_mul, vecMul_cons, head_cons, zero_smul, tail_cons,
-                          one_smul, zero_add, neg_smul, neg_cons, neg_zero, neg_empty, empty_mul]
+                simp
               apply Subtype.ext this
             rw [this]
           rw [map_mul, map_mul, map_mul, map_mul, hd2, hd1] at this
@@ -276,14 +271,10 @@ theorem w_preserved
           rfl
         exact this
       rw [d1, d2, diagonal_fin_three, diagonal_fin_three, ← first_rep] at this
-      simp only [cons_val, cons_mul, vecMul_cons, head_cons, smul_cons, smul_eq_mul, mul_one,
-                mul_zero, smul_empty, tail_cons, mul_neg, zero_smul, empty_vecMul, add_zero,
-                add_cons, zero_add, empty_add_empty, empty_mul, neg_smul, one_smul, neg_cons,
-                neg_zero, neg_empty, EmbeddingLike.apply_eq_iff_eq, vecCons_inj, and_true,
-                true_and] at this
+      simp at this
       nth_rw 4 [← first_rep]
       ext i j
-      fin_cases i <;> fin_cases j <;> simp only [Fin.reduceFinMk, of_apply, cons_val]
+      fin_cases i <;> fin_cases j <;> simp
       · exact (zero_iff_eq_neg_self _).mpr this.left
       · exact (zero_iff_eq_neg_self _).mpr this.right.symm
     have det_v1: det v1 = 1 := by
@@ -292,7 +283,7 @@ theorem w_preserved
       apply IsUnit.mk0
       by_contra
       rw [← second_rep, this, det_fin_three] at det_v1
-      simp only [of_apply, cons_val, zero_mul, sub_self, add_zero, zero_ne_one] at det_v1
+      simp at det_v1
     have third_rep:
           !![0,           v1 0 1, 0;
              -(v1 0 1)⁻¹, 0,      0;
@@ -304,7 +295,7 @@ theorem w_preserved
           have: (w1SL F) * (w1SL F) = (d3SL F) := by
             have: (w1 F) * (w1 F) = (d3 F) := by
               rw [w1, d3, diagonal_fin_three, mul_fin_three]
-              simp only [cons_val, mul_zero, mul_neg, mul_one, zero_add, add_zero, neg_zero]
+              simp
             apply Subtype.ext this
           rw [this]
         rw [map_mul, map_mul, hd3] at this
@@ -312,18 +303,15 @@ theorem w_preserved
         rw [← SpecialLinearGroup.coe_mul, this]
         rfl
       rw [← second_rep, d3, diagonal_fin_three] at this
-      simp only [cons_val, cons_mul, vecMul_cons, head_cons, zero_smul, tail_cons, smul_cons,
-                 smul_eq_mul, mul_zero, smul_empty, empty_vecMul, add_zero, zero_add,
-                 Equiv.symm_apply_apply, EmbeddingLike.apply_eq_iff_eq, vecCons_inj, and_true,
-                 true_and] at this
+      simp at this
       ext i j
-      fin_cases i <;> fin_cases j <;> simp only [Fin.reduceFinMk, of_apply, cons_val]
+      fin_cases i <;> fin_cases j <;> simp
       · rw [neg_eq_neg_one_mul, ← this.right.left, mul_assoc, not_zero_v101.mul_inv_cancel,
             mul_one]
       · have det_calc: 1 = -((v1 0 1) * (v1 1 0)) * (v1 2 2) := by
           nth_rw 1 [← det_v1, ← second_rep]
           rw [det_fin_three]
-          simp only [of_apply, mul_zero, cons_val, zero_mul, zero_sub, add_zero, sub_zero, neg_mul]
+          simp
         rw [this.left, neg_neg, one_mul] at det_calc
         exact det_calc
     exact ⟨ not_zero_v101, third_rep.symm ⟩
@@ -346,8 +334,7 @@ theorem w_preserved
             have: (d1SL F) * (w2SL F) * (d1SL F) = w2SL F := by
               have: (d1 F) * (w2 F) * (d1 F) = w2 F := by
                 rw [w2, d1, diagonal_fin_three, mul_fin_three, mul_fin_three]
-                simp only [cons_val, mul_one, mul_zero, add_zero, mul_neg, neg_zero, zero_add,
-                          neg_neg]
+                simp
               apply Subtype.ext this
             rw [this]
           rw [map_mul, map_mul, map_mul, map_mul, hd1] at this
@@ -356,12 +343,9 @@ theorem w_preserved
           rfl
         rw [d1, diagonal_fin_three] at this
         nth_rw 10 [← this, eta_fin_three v2]
-        simp only [cons_val, cons_mul, vecMul_cons, head_cons, one_smul, tail_cons, zero_smul,
-                   empty_vecMul, add_zero, neg_smul, neg_cons, zero_add, empty_mul,
-                   Equiv.symm_apply_apply, smul_cons, smul_eq_mul, mul_one, mul_zero, mul_neg,
-                   add_cons, empty_add_empty, neg_zero, neg_neg]
+        simp
       ext i j
-      fin_cases i <;> fin_cases j <;> simp only [Fin.reduceFinMk, of_apply, cons_val]
+      fin_cases i <;> fin_cases j <;> simp
       · exact (zero_iff_eq_neg_self _).mpr (this 0 1).symm
       · exact (zero_iff_eq_neg_self _).mpr (this 0 2).symm
       · exact (zero_iff_eq_neg_self _).mpr (this 1 0).symm
@@ -377,8 +361,7 @@ theorem w_preserved
             have: (w2SL F) * (d3SL F) = (d2SL F) * (w2SL F) := by
               have: (w2 F) * (d3 F) = (d2 F) * (w2 F) := by
                 rw [w2, d3, d2, diagonal_fin_three, diagonal_fin_three]
-                simp only [cons_val, neg_zero, zero_add, cons_mul, vecMul_cons, head_cons,
-                          neg_smul, one_smul, neg_cons, neg_empty, tail_cons, zero_smul, empty_mul]
+                simp
               apply Subtype.ext this
             rw [this]
           rw [map_mul, map_mul, map_mul, map_mul, hd2, hd3] at this
@@ -386,14 +369,10 @@ theorem w_preserved
           rfl
         exact this
       rw [d3, d2, diagonal_fin_three, diagonal_fin_three, ← first_rep] at this
-      simp only [cons_val, cons_mul, vecMul_cons, head_cons, smul_cons, smul_eq_mul,
-                mul_neg, mul_one, mul_zero, smul_empty, tail_cons, zero_smul, empty_vecMul,
-                add_zero, add_cons, zero_add, empty_add_empty, empty_mul, neg_smul, one_smul,
-                neg_cons, neg_zero, neg_empty, EmbeddingLike.apply_eq_iff_eq, vecCons_inj,
-                and_true, true_and] at this
+      simp at this
       nth_rw 4 [← first_rep]
       ext i j
-      fin_cases i <;> fin_cases j <;> simp only [Fin.reduceFinMk, of_apply, cons_val]
+      fin_cases i <;> fin_cases j <;> simp
       · exact (zero_iff_eq_neg_self _).mpr this.left.symm
       · exact (zero_iff_eq_neg_self _).mpr this.right
     have det_v2: det v2 = 1 := by
@@ -402,8 +381,7 @@ theorem w_preserved
       apply IsUnit.mk0
       by_contra
       rw [← second_rep, this, det_fin_three] at det_v2
-      simp only [of_apply, cons_val', mul_zero, cons_val, zero_mul, sub_self, add_zero,
-                 zero_ne_one] at det_v2
+      simp at det_v2
     have third_rep:
           !![1, 0,           0;
              0, 0,           v2 1 2;
@@ -415,7 +393,7 @@ theorem w_preserved
           have: (w2SL F) * (w2SL F) = (d1SL F) := by
             have: (w2 F) * (w2 F) = (d1 F) := by
               rw [w2, d1, diagonal_fin_three, mul_fin_three]
-              simp only [cons_val, mul_zero, mul_neg, mul_one, zero_add, add_zero, neg_zero]
+              simp
             apply Subtype.ext this
           rw [this]
         rw [map_mul, map_mul, hd1] at this
@@ -423,16 +401,13 @@ theorem w_preserved
         rw [← SpecialLinearGroup.coe_mul, this]
         rfl
       rw [← second_rep, d1, diagonal_fin_three] at this
-      simp only [cons_val, cons_mul, vecMul_cons, head_cons, smul_cons, smul_eq_mul, mul_zero,
-                smul_empty, tail_cons, zero_smul, empty_vecMul, add_zero, zero_add, empty_mul,
-                Equiv.symm_apply_apply, EmbeddingLike.apply_eq_iff_eq, vecCons_inj, and_true,
-                true_and] at this
+      simp at this
       ext i j
-      fin_cases i <;> fin_cases j <;> simp only [Fin.reduceFinMk, of_apply, cons_val]
+      fin_cases i <;> fin_cases j <;> simp
       · have det_calc: 1 = - (v2 0 0) * (v2 1 2) * (v2 2 1) := by
           nth_rw 1 [← det_v2, ← second_rep]
           rw [det_fin_three]
-          simp only [of_apply, mul_zero, cons_val, zero_mul, zero_sub, add_zero, sub_zero, neg_mul]
+          simp
         rw [mul_assoc, this.right.left, neg_mul_neg, mul_one] at det_calc
         exact det_calc
       · rw [neg_eq_neg_one_mul, ← this.right.right, mul_assoc, not_zero_v212.mul_inv_cancel,
@@ -468,30 +443,21 @@ theorem w_preserved
       congr
       rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
           mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], diag_preserved.left, d1, diagonal_fin_three]
-      simp only [cons_val, cons_mul, vecMul_cons, head_cons, smul_cons, smul_eq_mul, mul_one,
-                mul_zero, smul_empty, tail_cons, zero_smul, empty_vecMul, add_zero, zero_add,
-                mul_neg, empty_mul, Equiv.symm_apply_apply, neg_smul, neg_cons, neg_zero,
-                neg_empty, EmbeddingLike.apply_eq_iff_eq, vecCons_inj, and_true, neg_inj, true_and]
+      simp
       exact ⟨ l1unit.inv_mul_cancel, l2unit.mul_inv_cancel ⟩,
     by
       congr
       rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
           mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], diag_preserved.right.left, d2,
           diagonal_fin_three]
-      simp only [cons_val, cons_mul, vecMul_cons, head_cons, smul_cons, smul_eq_mul, mul_one,
-                mul_zero, smul_empty, tail_cons, zero_smul, empty_vecMul, add_zero, zero_add,
-                mul_neg, empty_mul, Equiv.symm_apply_apply, neg_smul, neg_cons, neg_zero,
-                neg_empty, EmbeddingLike.apply_eq_iff_eq, vecCons_inj, and_true, neg_inj, true_and]
+      simp
       exact ⟨ l1unit.inv_mul_cancel, l2unit.mul_inv_cancel ⟩,
     by
       congr
       rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
           mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], diag_preserved.right.right, d3,
           diagonal_fin_three]
-      simp only [cons_val, cons_mul, vecMul_cons, head_cons, smul_cons, smul_eq_mul, mul_one,
-                mul_zero, smul_empty, tail_cons, zero_smul, empty_vecMul, add_zero, zero_add,
-                mul_neg, empty_mul, Equiv.symm_apply_apply, neg_smul, neg_cons, neg_zero,
-                neg_empty, EmbeddingLike.apply_eq_iff_eq, vecCons_inj, and_true, neg_inj, true_and]
+      simp
       exact ⟨ l1unit.inv_mul_cancel, l2unit.mul_inv_cancel ⟩,
     by
       congr
