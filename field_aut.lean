@@ -31,7 +31,7 @@ abbrev AutSL3 : Type _ :=
 
 
 
-def innerAutSL3byGL3 (g : GL3 R) : AutSL3 R where
+def innerAutSL3byGL3 {R : Type*} [CommRing R] (g : GL3 R) : AutSL3 R where
   toFun := fun x => ⟨g * Matrix.SpecialLinearGroup.toGL x * g⁻¹, by
     simp [Matrix.det_mul,  Ring.mul_inverse_cancel]⟩
   invFun := fun x =>⟨g⁻¹ * Matrix.SpecialLinearGroup.toGL x * g, by
@@ -141,9 +141,9 @@ def d3SL : SL3 R :=
 theorem diag_preserved_after_change_of_basis
     (φ : AutSL3 F) :
     ∃ g : GL3 F,
-      innerAutSL3byGL3 F g (φ (d1SL F)) = d1SL F ∧
-      innerAutSL3byGL3 F g (φ (d2SL F)) = d2SL F ∧
-      innerAutSL3byGL3 F g (φ (d3SL F)) = d3SL F := by
+      innerAutSL3byGL3 g (φ (d1SL F)) = d1SL F ∧
+      innerAutSL3byGL3 g (φ (d2SL F)) = d2SL F ∧
+      innerAutSL3byGL3 g (φ (d3SL F)) = d3SL F := by
   sorry
 
 
@@ -170,14 +170,14 @@ def w2SL : SL3 R :=
 theorem w_preserved
     (φ : AutSL3 F) :
     ∃ g : GL3 F,
-      innerAutSL3byGL3 F g (φ (d1SL F)) = d1SL F ∧
-      innerAutSL3byGL3 F g (φ (d2SL F)) = d2SL F ∧
-      innerAutSL3byGL3 F g (φ (d3SL F)) = d3SL F ∧
-      innerAutSL3byGL3 F g (φ (w1SL F)) = w1SL F ∧
-      innerAutSL3byGL3 F g (φ (w2SL F)) = w2SL F := by
+      innerAutSL3byGL3 g (φ (d1SL F)) = d1SL F ∧
+      innerAutSL3byGL3 g (φ (d2SL F)) = d2SL F ∧
+      innerAutSL3byGL3 g (φ (d3SL F)) = d3SL F ∧
+      innerAutSL3byGL3 g (φ (w1SL F)) = w1SL F ∧
+      innerAutSL3byGL3 g (φ (w2SL F)) = w2SL F := by
   rcases diag_preserved_after_change_of_basis F φ with ⟨g, hd1, hd2, hd3⟩
-  let v1 := (innerAutSL3byGL3 F g (φ (w1SL F))).val
-  let v2 := (innerAutSL3byGL3 F g (φ (w2SL F))).val
+  let v1 := (innerAutSL3byGL3 g (φ (w1SL F))).val
+  let v2 := (innerAutSL3byGL3 g (φ (w2SL F))).val
   have hv1: ∃ l : F, IsUnit l ∧ v1 =
     !![0,    l, 0;
        -l⁻¹, 0, 0;
@@ -192,8 +192,8 @@ theorem w_preserved
               v1 1 0,  v1 1 1,  -v1 1 2;
               -v1 2 0, -v1 2 1, v1 2 2] i j = v1 i j := by
         have: (d3 F) * v1 * (d3 F) = v1 := by
-          have: (innerAutSL3byGL3 F g (φ ((d3SL F) * (w1SL F) * (d3SL F)))) =
-                 innerAutSL3byGL3 F g (φ (w1SL F)) := by
+          have: (innerAutSL3byGL3 g (φ ((d3SL F) * (w1SL F) * (d3SL F)))) =
+                 innerAutSL3byGL3 g (φ (w1SL F)) := by
             have: (d3SL F) * (w1SL F) * (d3SL F) = w1SL F := by
               have: (d3 F) * (w1 F) * (d3 F) = w1 F := by
                 rw [w1, d3, diagonal_fin_three, mul_fin_three, mul_fin_three]
@@ -219,8 +219,8 @@ theorem w_preserved
              0,      0,      v1 2 2] = v1 := by
       have: v1 * (d1 F) = (d2 F) * v1 := by
         have: v1 * (d1SL F) = (d2SL F) * v1 := by
-          have: (innerAutSL3byGL3 F g (φ ((w1SL F) * (d1SL F)))) =
-                innerAutSL3byGL3 F g (φ ((d2SL F) * (w1SL F))) := by
+          have: (innerAutSL3byGL3 g (φ ((w1SL F) * (d1SL F)))) =
+                innerAutSL3byGL3 g (φ ((d2SL F) * (w1SL F))) := by
             have: (w1SL F) * (d1SL F) = (d2SL F) * (w1SL F) := by
               have: (w1 F) * (d1 F) = (d2 F) * (w1 F) := by
                 rw [w1, d1, d2, diagonal_fin_three, diagonal_fin_three]
@@ -251,8 +251,8 @@ theorem w_preserved
              0,           0,      1] = v1 := by
       nth_rw 3 [← second_rep]
       have: v1 * v1 = d3 F := by
-        have: (innerAutSL3byGL3 F g (φ ((w1SL F) * (w1SL F)))) =
-              innerAutSL3byGL3 F g (φ (d3SL F)) := by
+        have: (innerAutSL3byGL3 g (φ ((w1SL F) * (w1SL F)))) =
+              innerAutSL3byGL3 g (φ (d3SL F)) := by
           have: (w1SL F) * (w1SL F) = (d3SL F) := by
             have: (w1 F) * (w1 F) = (d3 F) := by
               rw [w1, d3, diagonal_fin_three, mul_fin_three]
@@ -290,8 +290,8 @@ theorem w_preserved
               -v2 1 0,  v2 1 1,   v2 1 2;
               -v2 2 0,  v2 2 1,   v2 2 2] i j = v2 i j := by
         have: (d1 F) * v2 * (d1 F) = v2 := by
-          have: (innerAutSL3byGL3 F g (φ ((d1SL F) * (w2SL F) * (d1SL F)))) =
-                 innerAutSL3byGL3 F g (φ (w2SL F)) := by
+          have: (innerAutSL3byGL3 g (φ ((d1SL F) * (w2SL F) * (d1SL F)))) =
+                 innerAutSL3byGL3 g (φ (w2SL F)) := by
             have: (d1SL F) * (w2SL F) * (d1SL F) = w2SL F := by
               have: (d1 F) * (w2 F) * (d1 F) = w2 F := by
                 rw [w2, d1, diagonal_fin_three, mul_fin_three, mul_fin_three]
@@ -317,8 +317,8 @@ theorem w_preserved
              0,      v2 2 1, 0] = v2 := by
       have: v2 * (d3 F) = (d2 F) * v2 := by
         have: v2 * (d3SL F) = (d2SL F) * v2 := by
-          have: (innerAutSL3byGL3 F g (φ ((w2SL F) * (d3SL F)))) =
-                innerAutSL3byGL3 F g (φ ((d2SL F) * (w2SL F))) := by
+          have: (innerAutSL3byGL3 g (φ ((w2SL F) * (d3SL F)))) =
+                innerAutSL3byGL3 g (φ ((d2SL F) * (w2SL F))) := by
             have: (w2SL F) * (d3SL F) = (d2SL F) * (w2SL F) := by
               have: (w2 F) * (d3 F) = (d2 F) * (w2 F) := by
                 rw [w2, d3, d2, diagonal_fin_three, diagonal_fin_three]
@@ -349,8 +349,8 @@ theorem w_preserved
              0, -(v2 1 2)⁻¹, 0] = v2 := by
       nth_rw 3 [← second_rep]
       have: v2 * v2 = d1 F := by
-        have: (innerAutSL3byGL3 F g (φ ((w2SL F) * (w2SL F)))) =
-              innerAutSL3byGL3 F g (φ (d1SL F)) := by
+        have: (innerAutSL3byGL3 g (φ ((w2SL F) * (w2SL F)))) =
+              innerAutSL3byGL3 g (φ (d1SL F)) := by
           have: (w2SL F) * (w2SL F) = (d1SL F) := by
             have: (w2 F) * (w2 F) = (d1 F) := by
               rw [w2, d1, diagonal_fin_three, mul_fin_three]
@@ -602,12 +602,12 @@ We evaluate the commutator relation `[X₁₂, X₂₃] = X₁₃` to restrict t
    successfully flips `x₂₁(-1)` back to the standard `x₁₂(1)`.
 -/
 theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (d1SL F))) = d1SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (d2SL F))) = d2SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (d3SL F))) = d3SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (w1SL F))) = w1SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (w2SL F))) = w2SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (x12SL F))) = x12SL F := by
+      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F := by
 
   -- Get matrix g utilizing steps 1 and 2 for which the inner automorphism preserves
   -- d₁, ..., d₃, and w₁, ..., w₃. w₃ being preserved is given by w₁, and w₂ being
@@ -615,7 +615,7 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
   rcases w_preserved F φ with ⟨g, hd1, hd2, hd3, hw1, hw2⟩
 
   -- Define φ₂ as the inner automorphism by g.
-  let φ2 : AutSL3 F := φ.trans (innerAutSL3byGL3 F g)
+  let φ2 : AutSL3 F := φ.trans (innerAutSL3byGL3 g)
 
   have hd1_φ2 : φ2 (d1SL F) = d1SL F := hd1
   have hd2_φ2 : φ2 (d2SL F) = d2SL F := hd2
@@ -1258,7 +1258,7 @@ theorem field_class
     ∃ (σ : F ≃+* F) (ε : Bool) (g : GL (Fin 3) F),
       ∀ (x : SL3 F),
         φ x =
-            SpecialLinearGroup.map σ ((graphChoiceSL3 F ε) (innerAutSL3byGL3 F g x))
+            SpecialLinearGroup.map σ ((graphChoiceSL3 F ε) (innerAutSL3byGL3 g x))
              := by
   sorry
 
