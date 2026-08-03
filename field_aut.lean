@@ -1,9 +1,15 @@
-import Final_Project.cong_subgroup
+import Mathlib.Data.Matrix.Basic
+import Mathlib.Data.Matrix.Mul
+import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
+import Mathlib.LinearAlgebra.Determinant
+import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.RingTheory.LocalRing.Defs
 import Mathlib.RingTheory.LocalRing.ResidueField.Defs
-import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
+import Mathlib.Tactic.LinearCombination
 
+
+import cong_subgroup
 
 open Matrix BigOperators
 open scoped MatrixGroups
