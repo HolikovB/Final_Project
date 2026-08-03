@@ -31,51 +31,6 @@ abbrev AutSL3 : Type _ :=
 
 
 
-def ringAutMapSL3 (σ : R ≃+* R) (x : SL3 R) : SL3 R :=
-  ⟨((x : Matrix (Fin 3) (Fin 3) R).map σ), by
-    -- Need determinant compatibility with entrywise ring automorphisms.
-   calc
-      ((x : Matrix (Fin 3) (Fin 3) R).map ⇑σ).det
-          = σ ((x : Matrix (Fin 3) (Fin 3) R).det) := by
-              simpa only [RingEquiv.mapMatrix_apply] using
-                (σ.map_det
-                  (x : Matrix (Fin 3) (Fin 3) R)).symm
-      _ = 1 := by simp [x.property]⟩
-
-
-def ringAutSL3 (σ : R ≃+* R) : AutSL3 R where
-  toFun := ringAutMapSL3 R σ
-  invFun := ringAutMapSL3 R σ.symm
-
-  left_inv := by
-    intro x
-    apply Subtype.ext
-    dsimp [ringAutMapSL3]
-    simp
-    ext i j
-    dsimp [map]
-    exact RingEquiv.symm_apply_apply σ _
-
-
-
-  right_inv := by
-    intro x
-    apply Subtype.ext
-    dsimp [ringAutMapSL3]
-    simp
-    ext i j
-    dsimp [map]
-    exact RingEquiv.symm_apply_apply σ.symm _
-
-
-  map_mul' := by
-    intro x y
-    apply Subtype.ext
-    ext i j
-    simp [ringAutMapSL3, Matrix.mul_apply]
-
-
-
 def innerAutSL3byGL3 (g : GL3 R) : MulAut (SL3 R) where
   toFun := fun x => ⟨g * Matrix.SpecialLinearGroup.toGL x * g⁻¹, by
     simp [Matrix.det_mul,  Ring.mul_inverse_cancel]⟩
@@ -1303,7 +1258,7 @@ theorem field_class
     ∃ (σ : F ≃+* F) (ε : Bool) (g : GL (Fin 3) F),
       ∀ (x : SL3 F),
         φ x =
-            ringAutSL3 F σ ((graphChoiceSL3 F ε) (innerAutSL3byGL3 F g x))
+            SpecialLinearGroup.map σ ((graphChoiceSL3 F ε) (innerAutSL3byGL3 F g x))
              := by
   sorry
 
