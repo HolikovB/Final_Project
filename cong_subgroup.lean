@@ -46,18 +46,15 @@ def C : Subgroup (SL3 R) :=
 /-
 Have to prove
 -/
-def transvectionSL3 (i j : Fin 3) (hij : i ≠ j) (c : R) : SL3 R :=
-  ⟨Matrix.transvection i j c, by
-    exact Matrix.det_transvection_of_ne i j hij c
-  ⟩
+def TransvectionSL3 {R : Type*} [CommRing R] (i j : Fin 3) (x : R) (h : i ≠ j) : SL3 R :=
+  ⟨Matrix.transvection i j x, Matrix.det_transvection_of_ne i j h x⟩
 
-
+def IsTransvectionSL3 {R : Type*} [CommRing R] (x : SL3 R) : Prop :=
+  ∃ i j : Fin 3, ∃ c : R, ∃ (h : i ≠ j),
+    x = TransvectionSL3 i j c h
 
 def TransvectionSetSL3 : Set (SL3 R) :=
-  { g | ∃ i j : Fin 3, ∃ hij : i ≠ j, ∃ c : R,
-      g = transvectionSL3 R i j hij c }
-
-
+  { M | IsTransvectionSL3 M }
 
 def E3 : Subgroup (SL3 R) :=
   Subgroup.closure (TransvectionSetSL3 R)
