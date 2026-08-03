@@ -1175,7 +1175,7 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
     -- Substitute b = 1 back into our shape for X₁₂ to definitively prove X₁₂ = x₁₂(1).
     have h_X12_eq_x12 : X12 = x12 F := by
       rw [hb_eq_1] at hX12_b
-      rw [hX12_b, FieldAutomorphisms.x12]
+      rw [hX12_b, x12]
 
     -- Convert the matrix equality back to an SL₃ equality mapped by φ₂.
     have h_x12_preserved_φ2 : φ2 (x12SL F) = x12SL F := Subtype.ext h_X12_eq_x12
@@ -1268,7 +1268,7 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
       rw [hX12_inv]
       change (!![1, 0, 0; 1, 1, 0; 0, 0, 1] : Matrix (Fin 3) (Fin 3) F).transpose = x12 F
       ext i j; fin_cases i <;> fin_cases j <;>
-        simp [FieldAutomorphisms.x12, Matrix.transpose_apply, of_apply, cons_val, Fin.reduceFinMk]
+        simp [x12, Matrix.transpose_apply, of_apply, cons_val, Fin.reduceFinMk]
 
     -- Provide the witness utilizing ε = true to deploy the contragredient automorphism mapping.
     use g, true
