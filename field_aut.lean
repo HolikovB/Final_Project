@@ -689,25 +689,25 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
     have h_entry : ((d3 F) * X12) 0 2 = (X12 * (d3 F)) 0 2 :=
       congrFun (congrFun h_comm_d3_X12 0) 2
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact (zero_if_eq_neg F h_entry.symm).symm
+    exact ((zero_iff_eq_neg_self _).mpr h_entry.symm).symm
 
   have hX12_12 : X12 1 2 = 0 := by
     have h_entry : ((d3 F) * X12) 1 2 = (X12 * (d3 F)) 1 2 :=
       congrFun (congrFun h_comm_d3_X12 1) 2
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact (zero_if_eq_neg F h_entry.symm).symm
+    exact ((zero_iff_eq_neg_self _).mpr h_entry.symm).symm
 
   have hX12_20 : X12 2 0 = 0 := by
     have h_entry : ((d3 F) * X12) 2 0 = (X12 * (d3 F)) 2 0 :=
       congrFun (congrFun h_comm_d3_X12 2) 0
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact (zero_if_eq_neg F h_entry).symm
+    exact ((zero_iff_eq_neg_self _).mpr h_entry).symm
 
   have hX12_21 : X12 2 1 = 0 := by
     have h_entry : ((d3 F) * X12) 2 1 = (X12 * (d3 F)) 2 1 :=
       congrFun (congrFun h_comm_d3_X12 2) 1
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact (zero_if_eq_neg F h_entry).symm
+    exact ((zero_iff_eq_neg_self _).mpr h_entry).symm
 
   -- Similarly to before, we now prove that conjugation by d₁ of X₁₂ is its inverse.
   have h_inv_d1_X12 : (d1 F) * X12 * (d1 F) * X12 = 1 := by
