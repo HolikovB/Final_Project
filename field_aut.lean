@@ -1816,6 +1816,22 @@ def x23 : Matrix (Fin 3) (Fin 3) R :=
 def x23SL : SL3 R :=
   ⟨x23 R, by simp [x23, Matrix.det_fin_three]⟩
 
+def x32 : Matrix (Fin 3) (Fin 3) R :=
+  !![1, 0, 0;
+     0, 1, 0;
+     0, 1, 1]
+
+def x32SL : SL3 R :=
+  ⟨x32 R, by simp [x32, Matrix.det_fin_three]⟩
+
+def x32' : Matrix (Fin 3) (Fin 3) R :=
+  !![1, 0, 0;
+     0, 1, 0;
+     0, -1, 1]
+
+def x32SL' : SL3 R :=
+  ⟨x32' R, by simp [x32', Matrix.det_fin_three]⟩
+
 def graphChoiceSL3 {R : Type*} [CommRing R] (ε : Bool) : AutSL3 R :=
   if ε then invTransposeAutSL3 else (1 : AutSL3 R)
 
