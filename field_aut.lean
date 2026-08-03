@@ -135,7 +135,7 @@ def invTransposeAutSL3 : AutSL3 R where
 
 
 
-theorem zero_iff_eq_neg_self {R : Type*} [Ring R] [Invertible (2 : R)] (x : R):
+theorem zero_iff_eq_neg_self {R : Type*} [Ring R] [Invertible (2 : R)] {x : R}:
   0 = x ↔ x = -x := by
   constructor
   · intro h
@@ -248,10 +248,10 @@ theorem w_preserved
         simp
       ext i j
       fin_cases i <;> fin_cases j <;> simp
-      · exact (zero_iff_eq_neg_self _).mpr (this 0 2).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 1 2).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 2 0).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 2 1).symm
+      · exact zero_iff_eq_neg_self.mpr (this 0 2).symm
+      · exact zero_iff_eq_neg_self.mpr (this 1 2).symm
+      · exact zero_iff_eq_neg_self.mpr (this 2 0).symm
+      · exact zero_iff_eq_neg_self.mpr (this 2 1).symm
     have second_rep:
           !![0,      v1 0 1, 0;
              v1 1 0, 0,      0;
@@ -275,8 +275,8 @@ theorem w_preserved
       nth_rw 4 [← first_rep]
       ext i j
       fin_cases i <;> fin_cases j <;> simp
-      · exact (zero_iff_eq_neg_self _).mpr this.left
-      · exact (zero_iff_eq_neg_self _).mpr this.right.symm
+      · exact zero_iff_eq_neg_self.mpr this.left
+      · exact zero_iff_eq_neg_self.mpr this.right.symm
     have det_v1: det v1 = 1 := by
       rw [SpecialLinearGroup.det_coe]
     have not_zero_v101: IsUnit (v1 0 1) := by
@@ -346,10 +346,10 @@ theorem w_preserved
         simp
       ext i j
       fin_cases i <;> fin_cases j <;> simp
-      · exact (zero_iff_eq_neg_self _).mpr (this 0 1).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 0 2).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 1 0).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 2 0).symm
+      · exact zero_iff_eq_neg_self.mpr (this 0 1).symm
+      · exact zero_iff_eq_neg_self.mpr (this 0 2).symm
+      · exact zero_iff_eq_neg_self.mpr (this 1 0).symm
+      · exact zero_iff_eq_neg_self.mpr (this 2 0).symm
     have second_rep:
           !![v2 0 0, 0,      0;
              0,      0, v2 1 2;
@@ -373,8 +373,8 @@ theorem w_preserved
       nth_rw 4 [← first_rep]
       ext i j
       fin_cases i <;> fin_cases j <;> simp
-      · exact (zero_iff_eq_neg_self _).mpr this.left.symm
-      · exact (zero_iff_eq_neg_self _).mpr this.right
+      · exact zero_iff_eq_neg_self.mpr this.left.symm
+      · exact zero_iff_eq_neg_self.mpr this.right
     have det_v2: det v2 = 1 := by
       rw [SpecialLinearGroup.det_coe]
     have not_zero_v212: IsUnit (v2 1 2) := by
@@ -689,25 +689,25 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
     have h_entry : ((d3 F) * X12) 0 2 = (X12 * (d3 F)) 0 2 :=
       congrFun (congrFun h_comm_d3_X12 0) 2
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact ((zero_iff_eq_neg_self _).mpr h_entry.symm).symm
+    exact (zero_iff_eq_neg_self.mpr h_entry.symm).symm
 
   have hX12_12 : X12 1 2 = 0 := by
     have h_entry : ((d3 F) * X12) 1 2 = (X12 * (d3 F)) 1 2 :=
       congrFun (congrFun h_comm_d3_X12 1) 2
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact ((zero_iff_eq_neg_self _).mpr h_entry.symm).symm
+    exact (zero_iff_eq_neg_self.mpr h_entry.symm).symm
 
   have hX12_20 : X12 2 0 = 0 := by
     have h_entry : ((d3 F) * X12) 2 0 = (X12 * (d3 F)) 2 0 :=
       congrFun (congrFun h_comm_d3_X12 2) 0
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact ((zero_iff_eq_neg_self _).mpr h_entry).symm
+    exact (zero_iff_eq_neg_self.mpr h_entry).symm
 
   have hX12_21 : X12 2 1 = 0 := by
     have h_entry : ((d3 F) * X12) 2 1 = (X12 * (d3 F)) 2 1 :=
       congrFun (congrFun h_comm_d3_X12 2) 1
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact ((zero_iff_eq_neg_self _).mpr h_entry).symm
+    exact (zero_iff_eq_neg_self.mpr h_entry).symm
 
   -- Similarly to before, we now prove that conjugation by d₁ of X₁₂ is its inverse.
   have h_inv_d1_X12 : (d1 F) * X12 * (d1 F) * X12 = 1 := by
