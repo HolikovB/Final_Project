@@ -50,15 +50,15 @@ def innerAutSL3byGL3 {R : Type*} [CommRing R] (g : GL3 R) : AutSL3 R where
     apply Subtype.ext
     simp [mul_assoc]
 
-def invTransposeMap (x : SL3 R) : SL3 R :=
+def invTransposeMap {R : Type*} [CommRing R] (x : SL3 R) : SL3 R :=
   ⟨(((x⁻¹ : SL3 R) : Matrix (Fin 3) (Fin 3) R).transpose), by
     rw [Matrix.det_transpose]
     exact (x⁻¹ : SL3 R).property⟩
 
 
-def invTransposeAutSL3 : AutSL3 R where
-  toFun := invTransposeMap R
-  invFun := invTransposeMap R
+def invTransposeAutSL3 {R : Type*} [CommRing R] : AutSL3 R where
+  toFun := invTransposeMap
+  invFun := invTransposeMap
 
   left_inv := by
     intro x
@@ -463,8 +463,8 @@ def x23 : Matrix (Fin 3) (Fin 3) R :=
 def x23SL : SL3 R :=
   ⟨x23 R, by simp [x23, Matrix.det_fin_three]⟩
 
-def graphChoiceSL3 (ε : Bool) : AutSL3 R :=
-  if ε then invTransposeAutSL3 R else (1 : AutSL3 R)
+def graphChoiceSL3 {R : Type*} [CommRing R] (ε : Bool) : AutSL3 R :=
+  if ε then invTransposeAutSL3 else (1 : AutSL3 R)
 
 /--
 # Preservation of Standard Matrices under Contragredient
@@ -478,14 +478,14 @@ specific matrices `A`, we show that `Aᵀ * A = 1`. By the uniqueness of inverse
 `A⁻¹ = Aᵀ`, which means `Λ(A) = (Aᵀ)ᵀ = A`.
 -/
 theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
-    invTransposeAutSL3 F (d1SL F) = d1SL F ∧
-    invTransposeAutSL3 F (d2SL F) = d2SL F ∧
-    invTransposeAutSL3 F (d3SL F) = d3SL F ∧
-    invTransposeAutSL3 F (w1SL F) = w1SL F ∧
-    invTransposeAutSL3 F (w2SL F) = w2SL F := by
+    invTransposeAutSL3 (d1SL F) = d1SL F ∧
+    invTransposeAutSL3 (d2SL F) = d2SL F ∧
+    invTransposeAutSL3 (d3SL F) = d3SL F ∧
+    invTransposeAutSL3 (w1SL F) = w1SL F ∧
+    invTransposeAutSL3 (w2SL F) = w2SL F := by
 
   -- We prove preservation for d₁ by demonstrating that d₁ᵀ * d₁ = 1.
-  have hd1 : invTransposeAutSL3 F (d1SL F) = d1SL F := by
+  have hd1 : invTransposeAutSL3 (d1SL F) = d1SL F := by
     -- We explicitly construct the transpose of d₁ as an SL₃ element.
     let d1T_SL : SL3 F := ⟨(d1 F).transpose, by rw [Matrix.det_transpose]; exact (d1SL F).property⟩
 
@@ -512,7 +512,7 @@ theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
     ext i j; rfl
 
   -- We apply the exact same inverse-transpose cancellation logic for d₂.
-  have hd2 : invTransposeAutSL3 F (d2SL F) = d2SL F := by
+  have hd2 : invTransposeAutSL3 (d2SL F) = d2SL F := by
     let d2T_SL : SL3 F := ⟨(d2 F).transpose, by rw [Matrix.det_transpose]; exact (d2SL F).property⟩
     have h_mul : d2T_SL * d2SL F = 1 := by
       apply Subtype.ext
@@ -530,7 +530,7 @@ theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
     ext i j; rfl
 
   -- We apply the exact same inverse-transpose cancellation logic for d₃.
-  have hd3 : invTransposeAutSL3 F (d3SL F) = d3SL F := by
+  have hd3 : invTransposeAutSL3 (d3SL F) = d3SL F := by
     let d3T_SL : SL3 F := ⟨(d3 F).transpose, by rw [Matrix.det_transpose]; exact (d3SL F).property⟩
     have h_mul : d3T_SL * d3SL F = 1 := by
       apply Subtype.ext
@@ -548,7 +548,7 @@ theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
     ext i j; rfl
 
   -- We apply the exact same inverse-transpose cancellation logic for the matrix w₁.
-  have hw1 : invTransposeAutSL3 F (w1SL F) = w1SL F := by
+  have hw1 : invTransposeAutSL3 (w1SL F) = w1SL F := by
     let w1T_SL : SL3 F := ⟨(w1 F).transpose, by rw [Matrix.det_transpose]; exact (w1SL F).property⟩
     have h_mul : w1T_SL * w1SL F = 1 := by
       apply Subtype.ext
@@ -566,7 +566,7 @@ theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
     ext i j; rfl
 
   -- We apply the exact same inverse-transpose cancellation logic for the matrix w₂.
-  have hw2 : invTransposeAutSL3 F (w2SL F) = w2SL F := by
+  have hw2 : invTransposeAutSL3 (w2SL F) = w2SL F := by
     let w2T_SL : SL3 F := ⟨(w2 F).transpose, by rw [Matrix.det_transpose]; exact (w2SL F).property⟩
     have h_mul : w2T_SL * w2SL F = 1 := by
       apply Subtype.ext
@@ -602,12 +602,12 @@ We evaluate the commutator relation `[X₁₂, X₂₃] = X₁₃` to restrict t
    successfully flips `x₂₁(-1)` back to the standard `x₁₂(1)`.
 -/
 theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
-      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F := by
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F := by
 
   -- Get matrix g utilizing steps 1 and 2 for which the inner automorphism preserves
   -- d₁, ..., d₃, and w₁, ..., w₃. w₃ being preserved is given by w₁, and w₂ being
@@ -1198,11 +1198,11 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
     -- We utilize our prior theorem to securely show that this map preserves d₁, d₂, d₃, w₁, and w₂.
     rcases invTranspose_preserves_d_w F with ⟨h_invT_d1, h_invT_d2, h_invT_d3, h_invT_w1, h_invT_w2⟩
 
-    have h_phi3_d1 : graphChoiceSL3 F true (φ2 (d1SL F)) = d1SL F := by rw [hd1_φ2]; exact h_invT_d1
-    have h_phi3_d2 : graphChoiceSL3 F true (φ2 (d2SL F)) = d2SL F := by rw [hd2_φ2]; exact h_invT_d2
-    have h_phi3_d3 : graphChoiceSL3 F true (φ2 (d3SL F)) = d3SL F := by rw [hd3_φ2]; exact h_invT_d3
-    have h_phi3_w1 : graphChoiceSL3 F true (φ2 (w1SL F)) = w1SL F := by rw [hw1_φ2]; exact h_invT_w1
-    have h_phi3_w2 : graphChoiceSL3 F true (φ2 (w2SL F)) = w2SL F := by rw [hw2_φ2]; exact h_invT_w2
+    have h_phi3_d1 : graphChoiceSL3 true (φ2 (d1SL F)) = d1SL F := by rw [hd1_φ2]; exact h_invT_d1
+    have h_phi3_d2 : graphChoiceSL3 true (φ2 (d2SL F)) = d2SL F := by rw [hd2_φ2]; exact h_invT_d2
+    have h_phi3_d3 : graphChoiceSL3 true (φ2 (d3SL F)) = d3SL F := by rw [hd3_φ2]; exact h_invT_d3
+    have h_phi3_w1 : graphChoiceSL3 true (φ2 (w1SL F)) = w1SL F := by rw [hw1_φ2]; exact h_invT_w1
+    have h_phi3_w2 : graphChoiceSL3 true (φ2 (w2SL F)) = w2SL F := by rw [hw2_φ2]; exact h_invT_w2
 
     -- Finally, we apply the contragredient automorphism to X₁₂ = x₂₁(-1) to flip it to x₁₂(1).
     -- We isolate the explicit Matrix inversion away from the opaque SL₃ inversion.
@@ -1222,8 +1222,8 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
 
     -- We step the goal down to the matrix definitions, apply the known inverse,
     -- and let the transpose physically flip x₂₁(-1) to x₁₂(1).
-    have h_phi3_x12 : graphChoiceSL3 F true (φ2 (x12SL F)) = x12SL F := by
-      change invTransposeMap F (φ2 (x12SL F)) = x12SL F
+    have h_phi3_x12 : graphChoiceSL3 true (φ2 (x12SL F)) = x12SL F := by
+      change invTransposeMap (φ2 (x12SL F)) = x12SL F
       apply Subtype.ext
       change (((φ2 (x12SL F))⁻¹ : SL3 F) : Matrix (Fin 3) (Fin 3) F).transpose = x12 F
       rw [hX12_inv]
@@ -1258,7 +1258,7 @@ theorem field_class
     ∃ (σ : F ≃+* F) (ε : Bool) (g : GL (Fin 3) F),
       ∀ (x : SL3 F),
         φ x =
-            SpecialLinearGroup.map σ ((graphChoiceSL3 F ε) (innerAutSL3byGL3 g x))
+            SpecialLinearGroup.map σ ((graphChoiceSL3 ε) (innerAutSL3byGL3 g x))
              := by
   sorry
 
