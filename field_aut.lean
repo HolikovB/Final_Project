@@ -31,7 +31,7 @@ abbrev AutSL3 : Type _ :=
 
 
 
-def innerAutSL3byGL3 (g : GL3 R) : MulAut (SL3 R) where
+def innerAutSL3byGL3 (g : GL3 R) : AutSL3 R where
   toFun := fun x => ⟨g * Matrix.SpecialLinearGroup.toGL x * g⁻¹, by
     simp [Matrix.det_mul,  Ring.mul_inverse_cancel]⟩
   invFun := fun x =>⟨g⁻¹ * Matrix.SpecialLinearGroup.toGL x * g, by
