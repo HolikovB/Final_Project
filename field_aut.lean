@@ -1,12 +1,24 @@
-import Final_Project.cong_subgroup
+import Mathlib.Data.Matrix.Basic
+import Mathlib.Data.Matrix.Mul
+import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
+import Mathlib.LinearAlgebra.Determinant
+import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.RingTheory.LocalRing.Defs
 import Mathlib.RingTheory.LocalRing.ResidueField.Defs
-import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
+import Mathlib.Tactic.LinearCombination
 
+
+import cong_subgroup
 
 open Matrix BigOperators
 open scoped MatrixGroups
+open CongruenceSubgroup (
+    TransvectionSL3
+    IsTransvectionSL3
+    TransvectionSetSL3
+    SL3_generated_by_transvections
+    )
 noncomputable section
 
 
@@ -25,52 +37,7 @@ abbrev AutSL3 : Type _ :=
 
 
 
-def ringAutMapSL3 (σ : R ≃+* R) (x : SL3 R) : SL3 R :=
-  ⟨((x : Matrix (Fin 3) (Fin 3) R).map σ), by
-    -- Need determinant compatibility with entrywise ring automorphisms.
-   calc
-      ((x : Matrix (Fin 3) (Fin 3) R).map ⇑σ).det
-          = σ ((x : Matrix (Fin 3) (Fin 3) R).det) := by
-              simpa only [RingEquiv.mapMatrix_apply] using
-                (σ.map_det
-                  (x : Matrix (Fin 3) (Fin 3) R)).symm
-      _ = 1 := by simp [x.property]⟩
-
-
-def ringAutSL3 (σ : R ≃+* R) : AutSL3 R where
-  toFun := ringAutMapSL3 R σ
-  invFun := ringAutMapSL3 R σ.symm
-
-  left_inv := by
-    intro x
-    apply Subtype.ext
-    dsimp [ringAutMapSL3]
-    simp
-    ext i j
-    dsimp [map]
-    exact RingEquiv.symm_apply_apply σ _
-
-
-
-  right_inv := by
-    intro x
-    apply Subtype.ext
-    dsimp [ringAutMapSL3]
-    simp
-    ext i j
-    dsimp [map]
-    exact RingEquiv.symm_apply_apply σ.symm _
-
-
-  map_mul' := by
-    intro x y
-    apply Subtype.ext
-    ext i j
-    simp [ringAutMapSL3, Matrix.mul_apply]
-
-
-
-def innerAutSL3byGL3 (g : GL3 R) : MulAut (SL3 R) where
+def innerAutSL3byGL3 {R : Type*} [CommRing R] (g : GL3 R) : AutSL3 R where
   toFun := fun x => ⟨g * Matrix.SpecialLinearGroup.toGL x * g⁻¹, by
     simp [Matrix.det_mul,  Ring.mul_inverse_cancel]⟩
   invFun := fun x =>⟨g⁻¹ * Matrix.SpecialLinearGroup.toGL x * g, by
@@ -89,15 +56,15 @@ def innerAutSL3byGL3 (g : GL3 R) : MulAut (SL3 R) where
     apply Subtype.ext
     simp [mul_assoc]
 
-def invTransposeMap (x : SL3 R) : SL3 R :=
+def invTransposeMap {R : Type*} [CommRing R] (x : SL3 R) : SL3 R :=
   ⟨(((x⁻¹ : SL3 R) : Matrix (Fin 3) (Fin 3) R).transpose), by
     rw [Matrix.det_transpose]
     exact (x⁻¹ : SL3 R).property⟩
 
 
-def invTransposeAutSL3 : AutSL3 R where
-  toFun := invTransposeMap R
-  invFun := invTransposeMap R
+def invTransposeAutSL3 {R : Type*} [CommRing R] : AutSL3 R where
+  toFun := invTransposeMap
+  invFun := invTransposeMap
 
   left_inv := by
     intro x
@@ -135,7 +102,7 @@ def invTransposeAutSL3 : AutSL3 R where
 
 
 
-theorem zero_iff_eq_neg_self {R : Type*} [Ring R] [Invertible (2 : R)] (x : R):
+theorem zero_iff_eq_neg_self {R : Type*} [Ring R] [Invertible (2 : R)] {x : R}:
   0 = x ↔ x = -x := by
   constructor
   · intro h
@@ -144,7 +111,7 @@ theorem zero_iff_eq_neg_self {R : Type*} [Ring R] [Invertible (2 : R)] (x : R):
     rw [← one_mul x, ← invOf_mul_self (2 : R), mul_assoc, two_mul, add_eq_zero_iff_eq_neg.mpr h,
         mul_zero]
 
-namespace FieldAutomorpisms
+namespace FieldAutomorphisms
 
 
 variable (F : Type*) [Field F] [Invertible (2 : F)]
@@ -177,14 +144,1367 @@ def d3SL : SL3 R :=
     simp [d3, Matrix.det_diagonal, Fin.prod_univ_three]
   ⟩
 
+omit [Invertible (2 : F)] in
+/-- d1 is an involution. -/
+theorem d1_mul_d1 : d1SL F * d1SL F = 1 := by
+  apply Subtype.ext
+  show d1 F * d1 F = (1 : Matrix (Fin 3) (Fin 3) F)
+  unfold d1
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.mul_apply, Matrix.diagonal_apply]
+
+omit [Invertible (2 : F)] in
+/-- d2 is an involution. -/
+theorem d2_mul_d2 : d2SL F * d2SL F = 1 := by
+  apply Subtype.ext
+  show d2 F * d2 F = (1 : Matrix (Fin 3) (Fin 3) F)
+  unfold d2
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.mul_apply, Matrix.diagonal_apply]
+
+omit [Invertible (2 : F)] in
+/-- d3 is an involution. -/
+theorem d3_mul_d3 : d3SL F * d3SL F = 1 := by
+  apply Subtype.ext
+  show d3 F * d3 F = (1 : Matrix (Fin 3) (Fin 3) F)
+  unfold d3
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.mul_apply, Matrix.diagonal_apply]
+
+omit [Invertible (2 : F)] in
+/-- d1 and d2 commute. -/
+theorem d1_mul_d2_comm : d1SL F * d2SL F = d2SL F * d1SL F := by
+  apply Subtype.ext
+  show d1 F * d2 F = d2 F * d1 F
+  unfold d1 d2
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.mul_apply, Matrix.diagonal_apply]
+
+omit [Invertible (2 : F)] in
+/-- d1 * d2 = d3. -/
+theorem d1_mul_d2_eq_d3 : d1SL F * d2SL F = d3SL F := by
+  apply Subtype.ext
+  show d1 F * d2 F = d3 F
+  unfold d1 d2 d3
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.mul_apply, Matrix.diagonal_apply]
+/-- d1 is nontrivial. -/
+theorem d1SL_ne_one : d1SL F ≠ 1 := by
+  intro h
+  have h11 : (d1 F) 1 1 = (1 : Matrix (Fin 3) (Fin 3) F) 1 1 :=
+    congrArg (fun A : SL3 F => (A : Matrix (Fin 3) (Fin 3) F) 1 1) h
+  simp [d1] at h11
+  -- h11 : (-1 : F) = 1
+  have step : (-1 : F) + 1 = 1 + 1 := congrArg (· + 1) h11
+  have lhs0 : (-1 : F) + 1 = 0 := by ring
+  have rhs2 : (1 : F) + 1 = 2 := by ring
+  rw [lhs0, rhs2] at step
+  exact (Invertible.ne_zero (2 : F)) step.symm
+
+  /-- d2 is nontrivial. -/
+  theorem d2SL_ne_one : d2SL F ≠ 1 := by
+  intro h
+  have h00 : (d2 F) 0 0 = (1 : Matrix (Fin 3) (Fin 3) F) 0 0 :=
+    congrArg (fun A : SL3 F => (A : Matrix (Fin 3) (Fin 3) F) 0 0) h
+  simp [d2] at h00
+  have step : (-1 : F) + 1 = 1 + 1 := congrArg (· + 1) h00
+  have lhs0 : (-1 : F) + 1 = 0 := by ring
+  have rhs2 : (1 : F) + 1 = 2 := by ring
+  rw [lhs0, rhs2] at step
+  exact (Invertible.ne_zero (2 : F)) step.symm
+
+ /-- d3 is nontrivial. -/
+theorem d3SL_ne_one : d3SL F ≠ 1 := by
+  intro h
+  have h00 : (d3 F) 0 0 = (1 : Matrix (Fin 3) (Fin 3) F) 0 0 :=
+    congrArg (fun A : SL3 F => (A : Matrix (Fin 3) (Fin 3) F) 0 0) h
+  simp [d3] at h00
+  have step : (-1 : F) + 1 = 1 + 1 := congrArg (· + 1) h00
+  have lhs0 : (-1 : F) + 1 = 0 := by ring
+  have rhs2 : (1 : F) + 1 = 2 := by ring
+  rw [lhs0, rhs2] at step
+  exact (Invertible.ne_zero (2 : F)) step.symm
+
+
+omit [Invertible (2 : F)] in
+theorem phi_d1_mul_self (φ : AutSL3 F) :
+    φ (d1SL F) * φ (d1SL F) = 1 := by
+  rw [← map_mul, d1_mul_d1, map_one]
+
+omit [Invertible (2 : F)] in
+theorem phi_d2_mul_self (φ : AutSL3 F) :
+    φ (d2SL F) * φ (d2SL F) = 1 := by
+  rw [← map_mul, d2_mul_d2, map_one]
+
+omit [Invertible (2 : F)] in
+theorem phi_d3_mul_self (φ : AutSL3 F) :
+    φ (d3SL F) * φ (d3SL F) = 1 := by
+  rw [← map_mul, d3_mul_d3, map_one]
+
+theorem phi_d1_ne_one (φ : AutSL3 F) :
+    φ (d1SL F) ≠ 1 := by
+  intro h
+  exact d1SL_ne_one F (φ.injective (h.trans (map_one φ).symm))
+
+theorem phi_d2_ne_one (φ : AutSL3 F) :
+    φ (d2SL F) ≠ 1 := by
+  intro h
+  exact d2SL_ne_one F (φ.injective (h.trans (map_one φ).symm))
+
+theorem phi_d3_ne_one (φ : AutSL3 F) :
+    φ (d3SL F) ≠ 1 := by
+  intro h
+  exact d3SL_ne_one F (φ.injective (h.trans (map_one φ).symm))
+
+omit [Invertible (2 : F)] in
+theorem phi_d1_d2_comm (φ : AutSL3 F) :
+    φ (d1SL F) * φ (d2SL F) = φ (d2SL F) * φ (d1SL F) := by
+  rw [← map_mul, ← map_mul, d1_mul_d2_comm]
+
+omit [Invertible (2 : F)] in
+theorem phi_d1_d2_eq_d3 (φ : AutSL3 F) :
+    φ (d1SL F) * φ (d2SL F) = φ (d3SL F) := by
+  rw [← map_mul, d1_mul_d2_eq_d3]
+
+
+omit [Invertible (2 : F)] in
+/-- The matrix-level version of `phi_d1_mul_self`. -/
+theorem tau1_mul_self (φ : AutSL3 F) :
+    (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) *
+      (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) = 1 := by
+  have h := phi_d1_mul_self F φ
+  have hcoe := congrArg (fun A : SL3 F => (A : Matrix (Fin 3) (Fin 3) F)) h
+  simpa using hcoe
+
+theorem tau1_ne_neg_one (φ : AutSL3 F) :
+    (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) ≠ -1 := by
+  intro h
+  have hdet : (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F).det = 1 :=
+    Matrix.SpecialLinearGroup.det_coe (φ (d1SL F))
+  rw [h, show (-1 : Matrix (Fin 3) (Fin 3) F) = (-1 : F) • (1 : Matrix (Fin 3) (Fin 3) F) from
+    (neg_one_smul F (1 : Matrix (Fin 3) (Fin 3) F)).symm,
+    Matrix.det_smul, Matrix.det_one, mul_one] at hdet
+  have h3 : ((-1 : F)) ^ (Fintype.card (Fin 3)) = -1 := Odd.neg_one_pow (by decide)
+  rw [h3] at hdet
+  -- hdet : (-1 : F) = 1
+  have step : (-1 : F) + 1 = 1 + 1 := congrArg (· + 1) hdet
+  have lhs0 : (-1 : F) + 1 = 0 := by ring
+  have rhs2 : (1 : F) + 1 = 2 := by ring
+  rw [lhs0, rhs2] at step
+  exact (Invertible.ne_zero (2 : F)) step.symm
+
+theorem tau1_ne_one (φ : AutSL3 F) :
+    (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) ≠ 1 := by
+  intro h
+  apply phi_d1_ne_one F φ
+  apply Subtype.ext
+  simpa using h
+
+omit [Invertible (2 : F)] in
+/-- Standard basis vectors of `Fin 3 → F`. Used much later to read off the columns of
+the change-of-basis matrix `g` (see `gMatrix`). -/
+def e1 : Fin 3 → F := ![1, 0, 0]
+
+omit [Invertible (2 : F)] in
+def e2 : Fin 3 → F := ![0, 1, 0]
+
+omit [Invertible (2 : F)] in
+def e3 : Fin 3 → F := ![0, 0, 1]
+
+/-! ### Idempotent decomposition for an arbitrary involution `τ`
+
+If `τ * τ = 1` and `char F ≠ 2`, then `p = (1+τ)/2` and `q = (1-τ)/2` are complementary
+idempotents (`p+q=1`, `pq=qp=0`, `p²=p`, `q²=q`) whose ranges are exactly the `+1` and
+`-1` eigenspaces of `τ`. We build this *once* for a generic matrix `τ`, instead of
+repeating it separately for `τ1 = φ(d1)`, `τ2 = φ(d2)`, `τ3 = φ(d3)`, and specialize
+three times below (`finrank_range_pIdemLin_tau3_eq_one`, etc.). -/
+
+noncomputable def pIdem (τ : Matrix (Fin 3) (Fin 3) F) : Matrix (Fin 3) (Fin 3) F :=
+  (2 : F)⁻¹ • (1 + τ)
+
+noncomputable def qIdem (τ : Matrix (Fin 3) (Fin 3) F) : Matrix (Fin 3) (Fin 3) F :=
+  (2 : F)⁻¹ • (1 - τ)
+
+theorem pIdem_idem (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    pIdem F τ * pIdem F τ = pIdem F τ := by
+  have key : (1 + τ) * (1 + τ) = (2 : F) • (1 + τ) := by
+    rw [mul_add, add_mul, add_mul]
+    simp only [one_mul, mul_one, hτ2]
+    rw [two_smul]
+    abel
+  unfold pIdem
+  rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul, key, smul_smul]
+  congr 1
+  field_simp
+
+theorem qIdem_idem (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    qIdem F τ * qIdem F τ = qIdem F τ := by
+  have key : (1 - τ) * (1 - τ) = (2 : F) • (1 - τ) := by
+    rw [mul_sub, sub_mul, sub_mul]
+    simp only [one_mul, mul_one, hτ2]
+    rw [two_smul]
+    abel
+  unfold qIdem
+  rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul, key, smul_smul]
+  congr 1
+  field_simp
+
+theorem pIdem_add_qIdem (τ : Matrix (Fin 3) (Fin 3) F) :
+    pIdem F τ + qIdem F τ = 1 := by
+  unfold pIdem qIdem
+  rw [← smul_add]
+  have hsum : (1 + τ) + (1 - τ) = (2 : F) • (1 : Matrix (Fin 3) (Fin 3) F) := by
+    rw [two_smul]; abel
+  rw [hsum, smul_smul, inv_mul_cancel₀ (Invertible.ne_zero (2 : F)), one_smul]
+
+omit [Invertible (2 : F)] in
+theorem pIdem_mul_qIdem (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    pIdem F τ * qIdem F τ = 0 := by
+  have key : (1 + τ) * (1 - τ) = 0 := by
+    rw [mul_sub, add_mul, add_mul]
+    simp only [one_mul, mul_one, hτ2]
+    abel
+  unfold pIdem qIdem
+  rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul, key, smul_zero]
+
+omit [Invertible (2 : F)] in
+theorem qIdem_mul_pIdem (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    qIdem F τ * pIdem F τ = 0 := by
+  have key : (1 - τ) * (1 + τ) = 0 := by
+    rw [sub_mul, mul_add, mul_add]
+    simp only [one_mul, mul_one, hτ2]
+    abel
+  unfold qIdem pIdem
+  rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul, key, smul_zero]
+
+theorem pIdem_sub_qIdem (τ : Matrix (Fin 3) (Fin 3) F) :
+    pIdem F τ - qIdem F τ = τ := by
+  unfold pIdem qIdem
+  rw [← smul_sub]
+  have key : (1 + τ) - (1 - τ) = (2 : F) • τ := by
+    rw [two_smul]; abel
+  rw [key, smul_smul, inv_mul_cancel₀ (Invertible.ne_zero (2 : F)), one_smul]
+
+noncomputable def pIdemLin (τ : Matrix (Fin 3) (Fin 3) F) : Module.End F (Fin 3 → F) :=
+  Matrix.toLinAlgEquiv' (pIdem F τ)
+
+noncomputable def qIdemLin (τ : Matrix (Fin 3) (Fin 3) F) : Module.End F (Fin 3 → F) :=
+  Matrix.toLinAlgEquiv' (qIdem F τ)
+
+noncomputable def tauLin (τ : Matrix (Fin 3) (Fin 3) F) : Module.End F (Fin 3 → F) :=
+  Matrix.toLinAlgEquiv' τ
+
+theorem pIdemLin_idem (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    IsIdempotentElem (pIdemLin F τ) := by
+  show pIdemLin F τ * pIdemLin F τ = pIdemLin F τ
+  unfold pIdemLin
+  rw [← map_mul, pIdem_idem F τ hτ2]
+
+theorem qIdemLin_idem (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    IsIdempotentElem (qIdemLin F τ) := by
+  show qIdemLin F τ * qIdemLin F τ = qIdemLin F τ
+  unfold qIdemLin
+  rw [← map_mul, qIdem_idem F τ hτ2]
+
+theorem pIdemLin_add_qIdemLin (τ : Matrix (Fin 3) (Fin 3) F) :
+    pIdemLin F τ + qIdemLin F τ = 1 := by
+  unfold pIdemLin qIdemLin
+  rw [← map_add, pIdem_add_qIdem, Matrix.toLinAlgEquiv'_one]
+  rfl
+
+omit [Invertible (2 : F)] in
+theorem pIdemLin_mul_qIdemLin (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    pIdemLin F τ * qIdemLin F τ = 0 := by
+  show pIdemLin F τ * qIdemLin F τ = 0
+  unfold pIdemLin qIdemLin
+  rw [← map_mul, pIdem_mul_qIdem F τ hτ2, map_zero]
+
+theorem pIdemLin_sub_qIdemLin (τ : Matrix (Fin 3) (Fin 3) F) :
+    pIdemLin F τ - qIdemLin F τ = tauLin F τ := by
+  unfold pIdemLin qIdemLin tauLin
+  rw [← map_sub, pIdem_sub_qIdem]
+
+theorem tauLin_mul_qIdemLin (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    tauLin F τ * qIdemLin F τ = -qIdemLin F τ := by
+  rw [← pIdemLin_sub_qIdemLin, sub_mul, pIdemLin_mul_qIdemLin F τ hτ2, qIdemLin_idem F τ hτ2,
+    zero_sub]
+
+theorem ker_pIdemLin_eq_range_qIdemLin (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    LinearMap.ker (pIdemLin F τ) = LinearMap.range (qIdemLin F τ) := by
+  have hq : qIdemLin F τ = 1 - pIdemLin F τ := by
+    have h := pIdemLin_add_qIdemLin F τ
+    have := congrArg (fun x => x - pIdemLin F τ) h
+    simpa using this
+  rw [hq]
+  exact LinearMap.IsIdempotentElem.ker_eq_range_one_sub (pIdemLin_idem F τ hτ2)
+
+theorem isCompl_range_pIdemLin_range_qIdemLin (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    IsCompl (LinearMap.range (pIdemLin F τ)) (LinearMap.range (qIdemLin F τ)) := by
+  rw [← ker_pIdemLin_eq_range_qIdemLin F τ hτ2]
+  exact LinearMap.IsIdempotentElem.isCompl (pIdemLin_idem F τ hτ2)
+
+theorem finrank_range_pIdemLin_add_finrank_range_qIdemLin
+    (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    Module.finrank F (LinearMap.range (pIdemLin F τ)) +
+      Module.finrank F (LinearMap.range (qIdemLin F τ)) = 3 := by
+  rw [Submodule.finrank_add_eq_of_isCompl (isCompl_range_pIdemLin_range_qIdemLin F τ hτ2),
+    Module.finrank_fin_fun]
+
+theorem tau_ne_neg_one_of_det (τ : Matrix (Fin 3) (Fin 3) F) (hdet : τ.det = 1) :
+    τ ≠ -1 := by
+  intro h
+  rw [h, show (-1 : Matrix (Fin 3) (Fin 3) F) = (-1 : F) • (1 : Matrix (Fin 3) (Fin 3) F) from
+    (neg_one_smul F (1 : Matrix (Fin 3) (Fin 3) F)).symm,
+    Matrix.det_smul, Matrix.det_one, mul_one] at hdet
+  have h3 : ((-1 : F)) ^ (Fintype.card (Fin 3)) = -1 := Odd.neg_one_pow (by decide)
+  rw [h3] at hdet
+  have step : (-1 : F) + 1 = 1 + 1 := congrArg (· + 1) hdet
+  have lhs0 : (-1 : F) + 1 = 0 := by ring
+  have rhs0 : (1 : F) + 1 = 2 := by ring
+  rw [lhs0, rhs0] at step
+  exact (Invertible.ne_zero (2 : F)) step.symm
+
+theorem pIdem_ne_zero (τ : Matrix (Fin 3) (Fin 3) F) (hdet : τ.det = 1) :
+    pIdem F τ ≠ 0 := by
+  intro h
+  unfold pIdem at h
+  rcases smul_eq_zero.mp h with h2 | h2
+  · exact (inv_ne_zero (Invertible.ne_zero (2 : F))) h2
+  · exact tau_ne_neg_one_of_det F τ hdet (eq_neg_of_add_eq_zero_right h2)
+
+theorem qIdem_ne_zero (τ : Matrix (Fin 3) (Fin 3) F) (hτ1 : τ ≠ 1) :
+    qIdem F τ ≠ 0 := by
+  intro h
+  unfold qIdem at h
+  rcases smul_eq_zero.mp h with h2 | h2
+  · exact (inv_ne_zero (Invertible.ne_zero (2 : F))) h2
+  · exact hτ1 (sub_eq_zero.mp h2).symm
+
+theorem pIdemLin_ne_zero (τ : Matrix (Fin 3) (Fin 3) F) (hdet : τ.det = 1) :
+    pIdemLin F τ ≠ 0 := by
+  unfold pIdemLin
+  intro h
+  apply pIdem_ne_zero F τ hdet
+  apply Matrix.toLinAlgEquiv'.injective
+  rw [h, map_zero]
+
+theorem qIdemLin_ne_zero (τ : Matrix (Fin 3) (Fin 3) F) (hτ1 : τ ≠ 1) :
+    qIdemLin F τ ≠ 0 := by
+  unfold qIdemLin
+  intro h
+  apply qIdem_ne_zero F τ hτ1
+  apply Matrix.toLinAlgEquiv'.injective
+  rw [h, map_zero]
+
+theorem range_pIdemLin_ne_bot (τ : Matrix (Fin 3) (Fin 3) F) (hdet : τ.det = 1) :
+    LinearMap.range (pIdemLin F τ) ≠ ⊥ := by
+  rw [Ne, LinearMap.range_eq_bot]; exact pIdemLin_ne_zero F τ hdet
+
+theorem range_qIdemLin_ne_bot (τ : Matrix (Fin 3) (Fin 3) F) (hτ1 : τ ≠ 1) :
+    LinearMap.range (qIdemLin F τ) ≠ ⊥ := by
+  rw [Ne, LinearMap.range_eq_bot]; exact qIdemLin_ne_zero F τ hτ1
+
+theorem finrank_range_pIdemLin_pos (τ : Matrix (Fin 3) (Fin 3) F) (hdet : τ.det = 1) :
+    0 < Module.finrank F (LinearMap.range (pIdemLin F τ)) := by
+  rw [Module.finrank_pos_iff, Submodule.nontrivial_iff_ne_bot]
+  exact range_pIdemLin_ne_bot F τ hdet
+
+theorem finrank_range_qIdemLin_pos (τ : Matrix (Fin 3) (Fin 3) F) (hτ1 : τ ≠ 1) :
+    0 < Module.finrank F (LinearMap.range (qIdemLin F τ)) := by
+  rw [Module.finrank_pos_iff, Submodule.nontrivial_iff_ne_bot]
+  exact range_qIdemLin_ne_bot F τ hτ1
+
+theorem range_qIdemLin_invariant (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    LinearMap.range (qIdemLin F τ) ≤ (LinearMap.range (qIdemLin F τ)).comap (tauLin F τ) := by
+  rintro x ⟨y, rfl⟩
+  show tauLin F τ (qIdemLin F τ y) ∈ LinearMap.range (qIdemLin F τ)
+  have heq : tauLin F τ (qIdemLin F τ y) = -qIdemLin F τ y :=
+    LinearMap.congr_fun (tauLin_mul_qIdemLin F τ hτ2) y
+  rw [heq]
+  exact ⟨-y, by rw [map_neg]⟩
+
+theorem tauLin_eq_one_sub_two_smul_qIdemLin (τ : Matrix (Fin 3) (Fin 3) F) :
+    tauLin F τ = 1 - (2 : F) • qIdemLin F τ := by
+  rw [← pIdemLin_sub_qIdemLin]
+  have hp1 : pIdemLin F τ = 1 - qIdemLin F τ := by
+    have h := pIdemLin_add_qIdemLin F τ
+    have := congrArg (fun x => x - qIdemLin F τ) h
+    simpa using this
+  rw [hp1, two_smul]
+  abel
+
+theorem range_qIdemLin_mapQ_eq_id (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    (LinearMap.range (qIdemLin F τ)).mapQ (LinearMap.range (qIdemLin F τ)) (tauLin F τ)
+      (range_qIdemLin_invariant F τ hτ2) = LinearMap.id := by
+  apply LinearMap.ext
+  intro x
+  refine Submodule.Quotient.induction_on _ x (fun y => ?_)
+  simp only [Submodule.mapQ_apply, LinearMap.id_apply, Submodule.Quotient.eq]
+  have hy : tauLin F τ y = y - (2 : F) • qIdemLin F τ y := by
+    rw [tauLin_eq_one_sub_two_smul_qIdemLin]; rfl
+  have hdiff : tauLin F τ y - y = -((2 : F) • qIdemLin F τ y) := by
+    rw [hy]; abel
+  rw [hdiff]
+  exact Submodule.neg_mem _ (Submodule.smul_mem _ _ ⟨y, rfl⟩)
+
+theorem tauLin_restrict_eq_neg_one (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1)
+    (he : ∀ x ∈ LinearMap.range (qIdemLin F τ), tauLin F τ x ∈ LinearMap.range (qIdemLin F τ)) :
+    (tauLin F τ).restrict he = -1 := by
+  apply LinearMap.ext
+  rintro ⟨x, y, rfl⟩
+  apply Subtype.ext
+  show tauLin F τ (qIdemLin F τ y) = -(qIdemLin F τ y)
+  exact LinearMap.congr_fun (tauLin_mul_qIdemLin F τ hτ2) y
+
+omit [Invertible (2 : F)] in
+theorem det_neg_one_end_range_qIdemLin (τ : Matrix (Fin 3) (Fin 3) F) :
+    LinearMap.det (-1 : Module.End F (LinearMap.range (qIdemLin F τ))) =
+      (-1 : F) ^ Module.finrank F (LinearMap.range (qIdemLin F τ)) := by
+  have hrw : (-1 : Module.End F (LinearMap.range (qIdemLin F τ))) =
+      (-1 : F) • (1 : Module.End F (LinearMap.range (qIdemLin F τ))) :=
+    (neg_one_smul F (1 : Module.End F (LinearMap.range (qIdemLin F τ)))).symm
+  have hone : LinearMap.det (1 : Module.End F (LinearMap.range (qIdemLin F τ))) = 1 := by
+    rw [show (1 : Module.End F (LinearMap.range (qIdemLin F τ))) = LinearMap.id from rfl,
+      LinearMap.det_id]
+  rw [hrw, LinearMap.det_smul, hone, mul_one]
+
+theorem det_tauLin_eq (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    LinearMap.det (tauLin F τ) =
+      (-1 : F) ^ Module.finrank F (LinearMap.range (qIdemLin F τ)) := by
+  rw [LinearMap.det_eq_det_mul_det (LinearMap.range (qIdemLin F τ)) (tauLin F τ)
+      (range_qIdemLin_invariant F τ hτ2),
+    tauLin_restrict_eq_neg_one F τ hτ2, det_neg_one_end_range_qIdemLin,
+    range_qIdemLin_mapQ_eq_id F τ hτ2, LinearMap.det_id, mul_one]
+
+omit [Invertible (2 : F)] in
+theorem toLinAlgEquiv'_eq_toLin' (M : Matrix (Fin 3) (Fin 3) F) :
+    (Matrix.toLinAlgEquiv' M : Module.End F (Fin 3 → F)) = Matrix.toLin' M := by
+  apply LinearMap.ext
+  intro v
+  rw [Matrix.toLinAlgEquiv'_apply, Matrix.toLin'_apply]
+
+omit [Invertible (2 : F)] in
+theorem det_tauLin_eq_det (τ : Matrix (Fin 3) (Fin 3) F) :
+    LinearMap.det (tauLin F τ) = τ.det := by
+  unfold tauLin
+  rw [toLinAlgEquiv'_eq_toLin', LinearMap.det_toLin']
+
+theorem finrank_range_qIdemLin_eq_two
+    (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) (hτ1 : τ ≠ 1) (hdet : τ.det = 1) :
+    Module.finrank F (LinearMap.range (qIdemLin F τ)) = 2 := by
+  have h1 := det_tauLin_eq F τ hτ2
+  have h2 := det_tauLin_eq_det F τ
+  rw [h2, hdet] at h1
+  have hle : Module.finrank F (LinearMap.range (qIdemLin F τ)) ≤ 2 := by
+    have hsum := finrank_range_pIdemLin_add_finrank_range_qIdemLin F τ hτ2
+    have hpos := finrank_range_pIdemLin_pos F τ hdet
+    omega
+  have hpos := finrank_range_qIdemLin_pos F τ hτ1
+  have hcases : Module.finrank F (LinearMap.range (qIdemLin F τ)) = 1 ∨
+      Module.finrank F (LinearMap.range (qIdemLin F τ)) = 2 := by omega
+  rcases hcases with h | h
+  · rw [h] at h1
+    simp at h1
+    have step : (1 : F) + 1 = (-1 : F) + 1 := congrArg (· + 1) h1
+    have lhs2 : (1 : F) + 1 = 2 := by ring
+    have rhs0 : (-1 : F) + 1 = 0 := by ring
+    rw [lhs2, rhs0] at step
+    exact absurd step (Invertible.ne_zero (2 : F))
+  · exact h
+
+theorem finrank_range_pIdemLin_eq_one
+    (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) (hτ1 : τ ≠ 1) (hdet : τ.det = 1) :
+    Module.finrank F (LinearMap.range (pIdemLin F τ)) = 1 := by
+  have hsum := finrank_range_pIdemLin_add_finrank_range_qIdemLin F τ hτ2
+  have h2 := finrank_range_qIdemLin_eq_two F τ hτ2 hτ1 hdet
+  omega
+
+omit [Invertible (2 : F)] in
+/-! ### Specializing the generic `τ`-machinery to `τ1 = φ(d1)`, `τ2 = φ(d2)`, `τ3 = φ(d3)`
+
+`tau1_mul_self`/`tau1_ne_one`/`tau1_ne_neg_one` (defined earlier, specific to `d1`)
+already give the three hypotheses the generic lemmas need. `sl3_mul_self_matrix` and
+`sl3_ne_one_matrix` lift the analogous group-level facts for `d2`, `d3` down to the
+matrix level, so we get `finrank(range pIdemLin τᵢ) = 1` and `= 2` for the `-1`-side,
+for all three `i = 1, 2, 3`, essentially for free. -/
+
+omit [Invertible (2 : F)] in
+theorem sl3_mul_self_matrix {A : SL3 F} (h : A * A = 1) :
+    (A : Matrix (Fin 3) (Fin 3) F) * (A : Matrix (Fin 3) (Fin 3) F) = 1 := by
+  have hcoe := congrArg (fun B : SL3 F => (B : Matrix (Fin 3) (Fin 3) F)) h
+  simpa using hcoe
+
+omit [Invertible (2 : F)] in
+theorem sl3_ne_one_matrix {A : SL3 F} (h : A ≠ 1) :
+    (A : Matrix (Fin 3) (Fin 3) F) ≠ 1 := by
+  intro hc
+  exact h (Subtype.ext (by simpa using hc))
+
+omit [Invertible (2 : F)] in
+theorem tau2_mul_self (φ : AutSL3 F) :
+    (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) * (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) = 1 :=
+  sl3_mul_self_matrix F (phi_d2_mul_self F φ)
+
+omit [Invertible (2 : F)] in
+theorem tau3_mul_self (φ : AutSL3 F) :
+    (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F) * (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F) = 1 :=
+  sl3_mul_self_matrix F (phi_d3_mul_self F φ)
+
+theorem tau2_ne_one (φ : AutSL3 F) :
+    (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) ≠ 1 :=
+  sl3_ne_one_matrix F (phi_d2_ne_one F φ)
+
+theorem tau3_ne_one (φ : AutSL3 F) :
+    (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F) ≠ 1 :=
+  sl3_ne_one_matrix F (phi_d3_ne_one F φ)
+
+theorem finrank_range_pIdemLin_tau3_eq_one (φ : AutSL3 F) :
+    Module.finrank F (LinearMap.range (pIdemLin F (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F))) = 1 :=
+  finrank_range_pIdemLin_eq_one F _ (tau3_mul_self F φ) (tau3_ne_one F φ)
+    (Matrix.SpecialLinearGroup.det_coe (φ (d3SL F)))
+
+theorem finrank_range_qIdemLin_tau3_eq_two (φ : AutSL3 F) :
+    Module.finrank F (LinearMap.range (qIdemLin F (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F))) = 2 :=
+  finrank_range_qIdemLin_eq_two F _ (tau3_mul_self F φ) (tau3_ne_one F φ)
+    (Matrix.SpecialLinearGroup.det_coe (φ (d3SL F)))
+
+
+/-! ### `τ1` and `τ2` commute, hence preserve each other's eigenspaces
+
+This is the part that lets us go beyond "`τ1` alone is diagonalizable": since
+`φ(d1)` and `φ(d2)` commute, each of `range(pIdemLin τ1)`, `range(qIdemLin τ1)` is
+invariant under `τ2` (and under `pIdemLin τ2`/`qIdemLin τ2` individually). -/
+
+omit [Invertible (2 : F)] in
+theorem tau1_mul_tau2_comm (φ : AutSL3 F) :
+    (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) * (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) =
+      (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) * (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) := by
+  have h := phi_d1_d2_comm F φ
+  have hcoe := congrArg (fun A : SL3 F => (A : Matrix (Fin 3) (Fin 3) F)) h
+  simpa using hcoe
+
+omit [Invertible (2 : F)] in
+theorem pIdem_tau1_mul_tau2_comm (φ : AutSL3 F) :
+    pIdem F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) * (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) =
+      (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) * pIdem F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) := by
+  unfold pIdem
+  rw [Matrix.smul_mul, Matrix.mul_smul]
+  congr 1
+  rw [add_mul, mul_add, one_mul, mul_one, tau1_mul_tau2_comm]
+
+omit [Invertible (2 : F)] in
+theorem qIdem_tau1_mul_tau2_comm (φ : AutSL3 F) :
+    qIdem F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) * (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) =
+      (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) * qIdem F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) := by
+  unfold qIdem
+  rw [Matrix.smul_mul, Matrix.mul_smul]
+  congr 1
+  rw [sub_mul, mul_sub, one_mul, mul_one, tau1_mul_tau2_comm]
+
+omit [Invertible (2 : F)] in
+theorem pIdemLin_tau1_mul_tau2Lin_comm (φ : AutSL3 F) :
+    pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) *
+        tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) =
+      tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) *
+        pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) := by
+  show pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) *
+        tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) =
+      tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) *
+        pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)
+  unfold pIdemLin tauLin
+  rw [← map_mul, ← map_mul, pIdem_tau1_mul_tau2_comm]
+
+omit [Invertible (2 : F)] in
+theorem qIdemLin_tau1_mul_tau2Lin_comm (φ : AutSL3 F) :
+    qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) *
+        tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) =
+      tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) *
+        qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) := by
+  show qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) *
+        tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) =
+      tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) *
+        qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)
+  unfold qIdemLin tauLin
+  rw [← map_mul, ← map_mul, qIdem_tau1_mul_tau2_comm]
+
+omit [Invertible (2 : F)] in
+theorem range_pIdemLin_tau1_invariant_tau2 (φ : AutSL3 F) :
+    ∀ x ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)),
+      tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+        LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+  rintro x ⟨y, rfl⟩
+  exact ⟨tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) y,
+    LinearMap.congr_fun (pIdemLin_tau1_mul_tau2Lin_comm F φ) y⟩
+
+omit [Invertible (2 : F)] in
+theorem range_qIdemLin_tau1_invariant_tau2 (φ : AutSL3 F) :
+    ∀ x ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)),
+      tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+        LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+  rintro x ⟨y, rfl⟩
+  exact ⟨tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) y,
+    LinearMap.congr_fun (qIdemLin_tau1_mul_tau2Lin_comm F φ) y⟩
+
+
+omit [Invertible (2 : F)] in
+theorem pIdemLin_apply_eq (τ : Matrix (Fin 3) (Fin 3) F) (x : Fin 3 → F) :
+    pIdemLin F τ x = (2 : F)⁻¹ • (x + tauLin F τ x) := by
+  unfold pIdemLin pIdem tauLin
+  rw [map_smul, map_add, Matrix.toLinAlgEquiv'_one]
+  rfl
+
+omit [Invertible (2 : F)] in
+theorem qIdemLin_apply_eq (τ : Matrix (Fin 3) (Fin 3) F) (x : Fin 3 → F) :
+    qIdemLin F τ x = (2 : F)⁻¹ • (x - tauLin F τ x) := by
+  unfold qIdemLin qIdem tauLin
+  rw [map_smul, map_sub, Matrix.toLinAlgEquiv'_one]
+  rfl
+
+omit [Invertible (2 : F)] in
+theorem range_pIdemLin_tau1_invariant_pIdemLin_tau2 (φ : AutSL3 F) :
+    ∀ x ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)),
+      pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+        LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+  intro x hx
+  rw [pIdemLin_apply_eq]
+  exact Submodule.smul_mem _ _ (Submodule.add_mem _ hx
+    (range_pIdemLin_tau1_invariant_tau2 F φ x hx))
+
+omit [Invertible (2 : F)] in
+theorem range_pIdemLin_tau1_invariant_qIdemLin_tau2 (φ : AutSL3 F) :
+    ∀ x ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)),
+      qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+        LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+  intro x hx
+  rw [qIdemLin_apply_eq]
+  exact Submodule.smul_mem _ _ (Submodule.sub_mem _ hx
+    (range_pIdemLin_tau1_invariant_tau2 F φ x hx))
+
+theorem range_pIdemLin_tau1_le_sup (φ : AutSL3 F) :
+    LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ≤
+      (LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+          LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) ⊔
+        (LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+          LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) := by
+  intro x hx
+  have hsum : pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x +
+      qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x = x :=
+    LinearMap.congr_fun (pIdemLin_add_qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) x
+  have h1 : pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+      LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) :=
+    ⟨range_pIdemLin_tau1_invariant_pIdemLin_tau2 F φ x hx, ⟨x, rfl⟩⟩
+  have h2 : qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+      LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) :=
+    ⟨range_pIdemLin_tau1_invariant_qIdemLin_tau2 F φ x hx, ⟨x, rfl⟩⟩
+  rw [← hsum]
+  exact Submodule.add_mem_sup h1 h2
+
+omit [Invertible (2 : F)] in
+theorem tau1_mul_tau2_eq_tau3 (φ : AutSL3 F) :
+    (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) * (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) =
+      (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F) := by
+  have h := phi_d1_d2_eq_d3 F φ
+  have hcoe := congrArg (fun A : SL3 F => (A : Matrix (Fin 3) (Fin 3) F)) h
+  simpa using hcoe
+
+omit [Invertible (2 : F)] in
+theorem tauLin_tau3_eq_mul (φ : AutSL3 F) :
+    tauLin F (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F) =
+      tauLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) *
+        tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) := by
+  unfold tauLin
+  rw [← map_mul, tau1_mul_tau2_eq_tau3]
+
+omit [Invertible (2 : F)] in
+theorem qIdemLin_mul_pIdemLin (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    qIdemLin F τ * pIdemLin F τ = 0 := by
+  show qIdemLin F τ * pIdemLin F τ = 0
+  unfold qIdemLin pIdemLin
+  rw [← map_mul, qIdem_mul_pIdem F τ hτ2, map_zero]
+
+theorem tauLin_mul_pIdemLin (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) :
+    tauLin F τ * pIdemLin F τ = pIdemLin F τ := by
+  rw [← pIdemLin_sub_qIdemLin, sub_mul, pIdemLin_idem F τ hτ2, qIdemLin_mul_pIdemLin F τ hτ2,
+    sub_zero]
+
+theorem mem_range_pIdemLin_iff_eigen (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) (v : Fin 3 → F) :
+    v ∈ LinearMap.range (pIdemLin F τ) → tauLin F τ v = v := by
+  rintro ⟨y, rfl⟩
+  exact LinearMap.congr_fun (tauLin_mul_pIdemLin F τ hτ2) y
+
+theorem mem_range_qIdemLin_iff_eigen (τ : Matrix (Fin 3) (Fin 3) F) (hτ2 : τ * τ = 1) (v : Fin 3 → F) :
+    v ∈ LinearMap.range (qIdemLin F τ) → tauLin F τ v = -v := by
+  rintro ⟨y, rfl⟩
+  exact LinearMap.congr_fun (tauLin_mul_qIdemLin F τ hτ2) y
+
+/-! ### Pinning down all four pairwise intersections via `τ3 = τ1 τ2`
+
+We want `range(pIdemLin τ1) ⊓ range(pIdemLin τ2) = 0`, and the other three pairwise
+intersections to each be 1-dimensional (these are exactly the lines spanned by
+`v1, v2, v3` below). Redoing the idempotent argument *inside* a 2-dimensional
+subspace would need the whole machinery above generalized to an arbitrary subspace.
+Instead, we use `τ3 = τ1 τ2`, whose own `±1`-eigenspaces we already know the
+dimensions of (1 and 2, from the previous section) as a referee: every pairwise
+intersection embeds into a `±1`-eigenspace of `τ3`, which bounds its dimension, and a
+short linear system on the four dimensions (`a+b=1`, `c+d=2`, `d≤1`, ...) pins each
+one down exactly, without ever touching a genuine subspace-of-a-subspace argument. -/
+
+theorem inf_q1_q2_le_p3 (φ : AutSL3 F) :
+    LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) ≤
+      LinearMap.range (pIdemLin F (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+  intro v hv
+  have h1 : tauLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) v = -v :=
+    mem_range_qIdemLin_iff_eigen F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) (tau1_mul_self F φ) v hv.1
+  have h2 : tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) v = -v :=
+    mem_range_qIdemLin_iff_eigen F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) (tau2_mul_self F φ) v hv.2
+  have h3 : tauLin F (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F) v = v := by
+    rw [tauLin_tau3_eq_mul]
+    show tauLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)
+      (tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) v) = v
+    rw [h2, map_neg, h1, neg_neg]
+  refine ⟨v, ?_⟩
+  rw [pIdemLin_apply_eq, h3]
+  rw [show v + v = (2 : F) • v from (two_smul F v).symm, smul_smul,
+    inv_mul_cancel₀ (Invertible.ne_zero (2 : F)), one_smul]
+
+omit [Invertible (2 : F)] in
+theorem range_qIdemLin_tau1_invariant_pIdemLin_tau2 (φ : AutSL3 F) :
+    ∀ x ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)),
+      pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+        LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+  intro x hx
+  rw [pIdemLin_apply_eq]
+  exact Submodule.smul_mem _ _ (Submodule.add_mem _ hx
+    (range_qIdemLin_tau1_invariant_tau2 F φ x hx))
+
+omit [Invertible (2 : F)] in
+theorem range_qIdemLin_tau1_invariant_qIdemLin_tau2 (φ : AutSL3 F) :
+    ∀ x ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)),
+      qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+        LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+  intro x hx
+  rw [qIdemLin_apply_eq]
+  exact Submodule.smul_mem _ _ (Submodule.sub_mem _ hx
+    (range_qIdemLin_tau1_invariant_tau2 F φ x hx))
+
+theorem range_qIdemLin_tau1_le_sup (φ : AutSL3 F) :
+    LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ≤
+      (LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+          LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) ⊔
+        (LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+          LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) := by
+  intro x hx
+  have hsum : pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x +
+      qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x = x :=
+    LinearMap.congr_fun (pIdemLin_add_qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) x
+  have h1 : pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+      LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) :=
+    ⟨range_qIdemLin_tau1_invariant_pIdemLin_tau2 F φ x hx, ⟨x, rfl⟩⟩
+  have h2 : qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) x ∈
+      LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) :=
+    ⟨range_qIdemLin_tau1_invariant_qIdemLin_tau2 F φ x hx, ⟨x, rfl⟩⟩
+  rw [← hsum]
+  exact Submodule.add_mem_sup h1 h2
+
+theorem finrank_inf_add_finrank_inf_p1 (φ : AutSL3 F) :
+    Module.finrank F ↥(LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) +
+      Module.finrank F ↥(LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) = 1 := by
+  have hsup : (LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) ⊔
+      (LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) =
+      LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+    apply le_antisymm
+    · exact sup_le inf_le_left inf_le_left
+    · exact range_pIdemLin_tau1_le_sup F φ
+  have hdisj : Disjoint
+      (LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+      (LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) := by
+    apply Disjoint.mono inf_le_right inf_le_right
+    exact (isCompl_range_pIdemLin_range_qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)
+      (tau2_mul_self F φ)).disjoint
+  have h := Submodule.finrank_sup_add_finrank_inf_eq
+    (LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+      LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+      LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+  have hP1 := finrank_range_pIdemLin_eq_one F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)
+    (tau1_mul_self F φ) (tau1_ne_one F φ) (Matrix.SpecialLinearGroup.det_coe (φ (d1SL F)))
+  rw [hsup, hdisj.eq_bot, finrank_bot, hP1] at h
+  omega
+
+theorem finrank_inf_add_finrank_inf_q1 (φ : AutSL3 F) :
+    Module.finrank F ↥(LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) +
+      Module.finrank F ↥(LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) = 2 := by
+  have hsup : (LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) ⊔
+      (LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) =
+      LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+    apply le_antisymm
+    · exact sup_le inf_le_left inf_le_left
+    · exact range_qIdemLin_tau1_le_sup F φ
+  have hdisj : Disjoint
+      (LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+      (LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) := by
+    apply Disjoint.mono inf_le_right inf_le_right
+    exact (isCompl_range_pIdemLin_range_qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)
+      (tau2_mul_self F φ)).disjoint
+  have h := Submodule.finrank_sup_add_finrank_inf_eq
+    (LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+      LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+      LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+  have hQ1 := finrank_range_qIdemLin_eq_two F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)
+    (tau1_mul_self F φ) (tau1_ne_one F φ) (Matrix.SpecialLinearGroup.det_coe (φ (d1SL F)))
+  rw [hsup, hdisj.eq_bot, finrank_bot, hQ1] at h
+  omega
+
+theorem finrank_inf_q1_q2_le_one (φ : AutSL3 F) :
+    Module.finrank F ↥(LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) ≤ 1 := by
+  have h := Submodule.finrank_mono (inf_q1_q2_le_p3 F φ)
+  rwa [finrank_range_pIdemLin_eq_one F (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F)
+    (tau3_mul_self F φ) (tau3_ne_one F φ) (Matrix.SpecialLinearGroup.det_coe (φ (d3SL F)))] at h
+
+theorem finrank_inf_q1_p2_le_one (φ : AutSL3 F) :
+    Module.finrank F ↥(LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) ≤ 1 := by
+  have h := Submodule.finrank_mono (inf_le_right :
+    LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) ≤
+      LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+  rwa [finrank_range_pIdemLin_eq_one F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)
+    (tau2_mul_self F φ) (tau2_ne_one F φ) (Matrix.SpecialLinearGroup.det_coe (φ (d2SL F)))] at h
+
+theorem finrank_inf_q1_p2_eq_one (φ : AutSL3 F) :
+    Module.finrank F ↥(LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) = 1 := by
+  have hsum := finrank_inf_add_finrank_inf_q1 F φ
+  have hle1 := finrank_inf_q1_p2_le_one F φ
+  have hle2 := finrank_inf_q1_q2_le_one F φ
+  omega
+
+theorem finrank_inf_q1_q2_eq_one (φ : AutSL3 F) :
+    Module.finrank F ↥(LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) = 1 := by
+  have hsum := finrank_inf_add_finrank_inf_q1 F φ
+  have hc := finrank_inf_q1_p2_eq_one F φ
+  omega
+
+theorem range_qIdemLin_inf_pIdemLin_eq_p2 (φ : AutSL3 F) :
+    LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) =
+      LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) := by
+  apply Submodule.eq_of_le_of_finrank_eq inf_le_right
+  rw [finrank_inf_q1_p2_eq_one F φ,
+    finrank_range_pIdemLin_eq_one F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)
+      (tau2_mul_self F φ) (tau2_ne_one F φ) (Matrix.SpecialLinearGroup.det_coe (φ (d2SL F)))]
+
+theorem range_pIdemLin_inf_pIdemLin_eq_bot (φ : AutSL3 F) :
+    LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) = ⊥ := by
+  have hP2_eq : LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) =
+      LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) :=
+    (range_qIdemLin_inf_pIdemLin_eq_p2 F φ).symm
+  rw [hP2_eq, ← inf_assoc]
+  have hbot : LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+      LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) = ⊥ :=
+    (isCompl_range_pIdemLin_range_qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)
+      (tau1_mul_self F φ)).disjoint.eq_bot
+  rw [hbot, bot_inf_eq]
+
+theorem finrank_inf_p1_p2_eq_zero (φ : AutSL3 F) :
+    Module.finrank F ↥(LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) = 0 := by
+  rw [range_pIdemLin_inf_pIdemLin_eq_bot F φ, finrank_bot]
+
+theorem finrank_inf_p1_q2_eq_one (φ : AutSL3 F) :
+    Module.finrank F ↥(LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) = 1 := by
+  have hsum := finrank_inf_add_finrank_inf_p1 F φ
+  have ha := finrank_inf_p1_p2_eq_zero F φ
+  omega
+
+theorem inf_p1_q2_ne_bot (φ : AutSL3 F) :
+    LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) ≠ ⊥ := by
+  intro h
+  have h1 := finrank_inf_p1_q2_eq_one F φ
+  rw [h, finrank_bot] at h1
+  exact absurd h1 (by norm_num)
+
+theorem inf_q1_p2_ne_bot (φ : AutSL3 F) :
+    LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) ≠ ⊥ := by
+  intro h
+  have h1 := finrank_inf_q1_p2_eq_one F φ
+  rw [h, finrank_bot] at h1
+  exact absurd h1 (by norm_num)
+
+theorem inf_q1_q2_ne_bot (φ : AutSL3 F) :
+    LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) ≠ ⊥ := by
+  intro h
+  have h1 := finrank_inf_q1_q2_eq_one F φ
+  rw [h, finrank_bot] at h1
+  exact absurd h1 (by norm_num)
+
+/-! ### Extracting basis vectors `v1, v2, v3` and checking they are independent
+
+`v1` spans `P1 ⊓ Q2` (`τ1 = +1`, `τ2 = -1`), `v2` spans `Q1 ⊓ P2`, `v3` spans `Q1 ⊓ Q2` —
+each is exactly 1-dimensional by the previous section, hence nonzero and unique up to
+scalar. `linearIndependent_v1_v2_v3` checks that any vanishing combination of the three
+forces all three coefficients to vanish (using that `τ1`, `τ2` act by different sign
+patterns on each `vᵢ`). -/
+
+theorem exists_v1 (φ : AutSL3 F) :
+    ∃ v : Fin 3 → F, v ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) ∧ v ≠ 0 :=
+  Submodule.exists_mem_ne_zero_of_ne_bot (inf_p1_q2_ne_bot F φ)
+
+theorem exists_v2 (φ : AutSL3 F) :
+    ∃ v : Fin 3 → F, v ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) ∧ v ≠ 0 :=
+  Submodule.exists_mem_ne_zero_of_ne_bot (inf_q1_p2_ne_bot F φ)
+
+theorem exists_v3 (φ : AutSL3 F) :
+    ∃ v : Fin 3 → F, v ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) ∧ v ≠ 0 :=
+  Submodule.exists_mem_ne_zero_of_ne_bot (inf_q1_q2_ne_bot F φ)
+
+theorem linearIndependent_v1_v2_v3 (φ : AutSL3 F)
+    {v1 v2 v3 : Fin 3 → F}
+    (hv1 : v1 ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv2 : v2 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv3 : v3 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv1' : v1 ≠ 0) (hv2' : v2 ≠ 0) (hv3' : v3 ≠ 0)
+    (a b c : F) (h : a • v1 + b • v2 + c • v3 = 0) :
+    a = 0 ∧ b = 0 ∧ c = 0 := by
+  have e1_1 : tauLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) v1 = v1 :=
+    mem_range_pIdemLin_iff_eigen F _ (tau1_mul_self F φ) v1 hv1.1
+  have e1_2 : tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) v1 = -v1 :=
+    mem_range_qIdemLin_iff_eigen F _ (tau2_mul_self F φ) v1 hv1.2
+  have e2_1 : tauLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) v2 = -v2 :=
+    mem_range_qIdemLin_iff_eigen F _ (tau1_mul_self F φ) v2 hv2.1
+  have e2_2 : tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) v2 = v2 :=
+    mem_range_pIdemLin_iff_eigen F _ (tau2_mul_self F φ) v2 hv2.2
+  have e3_1 : tauLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) v3 = -v3 :=
+    mem_range_qIdemLin_iff_eigen F _ (tau1_mul_self F φ) v3 hv3.1
+  have e3_2 : tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) v3 = -v3 :=
+    mem_range_qIdemLin_iff_eigen F _ (tau2_mul_self F φ) v3 hv3.2
+  have h1 : a • v1 + -(b • v2) + -(c • v3) = 0 := by
+    have hh := congrArg (tauLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) h
+    rw [map_zero, map_add, map_add, map_smul, map_smul, map_smul, e1_1, e2_1, e3_1,
+      smul_neg, smul_neg] at hh
+    exact hh
+  have hadd : a • v1 + a • v1 = 0 := by
+    have heq : (a • v1 + b • v2 + c • v3) + (a • v1 + -(b • v2) + -(c • v3)) =
+        a • v1 + a • v1 := by abel
+    rw [h, h1] at heq
+    simpa using heq.symm
+  have ha : a = 0 := by
+    have h2 : (2 : F) • (a • v1) = 0 := by rw [two_smul]; exact hadd
+    rw [smul_smul] at h2
+    rcases smul_eq_zero.mp h2 with h2a | hv
+    · rcases mul_eq_zero.mp h2a with h20 | ha0
+      · exact absurd h20 (Invertible.ne_zero (2 : F))
+      · exact ha0
+    · exact absurd hv hv1'
+  have hbc : b • v2 + c • v3 = 0 := by
+    rw [ha] at h
+    simpa using h
+  have h2 : b • v2 + -(c • v3) = 0 := by
+    have hh := congrArg (tauLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)) hbc
+    rw [map_zero, map_add, map_smul, map_smul, e2_2, e3_2, smul_neg] at hh
+    exact hh
+  have hbadd : b • v2 + b • v2 = 0 := by
+    have heq : (b • v2 + c • v3) + (b • v2 + -(c • v3)) = b • v2 + b • v2 := by abel
+    rw [hbc, h2] at heq
+    simpa using heq.symm
+  have hb : b = 0 := by
+    have h2' : (2 : F) • (b • v2) = 0 := by rw [two_smul]; exact hbadd
+    rw [smul_smul] at h2'
+    rcases smul_eq_zero.mp h2' with h2b | hv
+    · rcases mul_eq_zero.mp h2b with h20 | hb0
+      · exact absurd h20 (Invertible.ne_zero (2 : F))
+      · exact hb0
+    · exact absurd hv hv2'
+  have hc : c = 0 := by
+    rw [hb] at hbc
+    simp only [zero_smul, zero_add] at hbc
+    rcases smul_eq_zero.mp hbc with hc0 | hv
+    · exact hc0
+    · exact absurd hv hv3'
+  exact ⟨ha, hb, hc⟩
+
+theorem linearIndependent_fin3 (φ : AutSL3 F)
+    (v1 v2 v3 : Fin 3 → F)
+    (hv1 : v1 ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv2 : v2 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv3 : v3 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv1' : v1 ≠ 0) (hv2' : v2 ≠ 0) (hv3' : v3 ≠ 0) :
+    LinearIndependent F ![v1, v2, v3] := by
+  rw [Fintype.linearIndependent_iff]
+  intro g hg i
+  have key := linearIndependent_v1_v2_v3 F φ hv1 hv2 hv3 hv1' hv2' hv3' (g 0) (g 1) (g 2) (by
+    have : ∑ j : Fin 3, g j • (![v1, v2, v3] j) = g 0 • v1 + g 1 • v2 + g 2 • v3 := by
+      simp [Fin.sum_univ_three]
+    rw [← this]; exact hg)
+  fin_cases i
+  · exact key.1
+  · exact key.2.1
+  · exact key.2.2
+
+noncomputable def basisV123 (φ : AutSL3 F)
+    (v1 v2 v3 : Fin 3 → F)
+    (hv1 : v1 ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv2 : v2 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv3 : v3 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv1' : v1 ≠ 0) (hv2' : v2 ≠ 0) (hv3' : v3 ≠ 0) :
+    Module.Basis (Fin 3) F (Fin 3 → F) :=
+  basisOfLinearIndependentOfCardEqFinrank
+    (linearIndependent_fin3 F φ v1 v2 v3 hv1 hv2 hv3 hv1' hv2' hv3')
+    (by simp)
+
+/-! ### Building the change-of-basis matrix `g`
+
+`gMatrix v1 v2 v3` is the matrix whose columns are `v1, v2, v3`. We check it sends the
+standard basis vectors to `v1, v2, v3` (`gMatrix_mulVec_e1/e2/e3`), that it is injective
+(hence invertible, via `linearIndependent_v1_v2_v3`), and finally that
+`τᵢ · g = g · dᵢ` for `i = 1, 2, 3` by comparing both sides column by column
+(`tau1_mul_gMatrix_eq`, `tau2_mul_gMatrix_eq`, and `g_inv_mul_tau3_mul_g` via
+`τ3 = τ1 τ2`, `d3 = d1 d2`). -/
+
+noncomputable def gMatrix (v1 v2 v3 : Fin 3 → F) : Matrix (Fin 3) (Fin 3) F :=
+  fun i j => ![v1, v2, v3] j i
+
+omit [Invertible (2 : F)] in
+theorem gMatrix_mulVec_e1 (v1 v2 v3 : Fin 3 → F) :
+    (gMatrix F v1 v2 v3).mulVec (e1 F) = v1 := by
+  ext i
+  simp [gMatrix, Matrix.mulVec, e1]
+
+omit [Invertible (2 : F)] in
+theorem gMatrix_mulVec_e2 (v1 v2 v3 : Fin 3 → F) :
+    (gMatrix F v1 v2 v3).mulVec (e2 F) = v2 := by
+  ext i
+  simp [gMatrix, Matrix.mulVec, e2]
+
+omit [Invertible (2 : F)] in
+theorem gMatrix_mulVec_e3 (v1 v2 v3 : Fin 3 → F) :
+    (gMatrix F v1 v2 v3).mulVec (e3 F) = v3 := by
+  ext i
+  simp [gMatrix, Matrix.mulVec, e3]
+
+
+omit [Invertible (2 : F)] in
+theorem gMatrix_mulVec_general (v1 v2 v3 : Fin 3 → F) (x : Fin 3 → F) :
+    (gMatrix F v1 v2 v3).mulVec x = x 0 • v1 + x 1 • v2 + x 2 • v3 := by
+  funext i
+  show ∑ j, gMatrix F v1 v2 v3 i j * x j = (x 0 • v1 + x 1 • v2 + x 2 • v3) i
+  rw [Fin.sum_univ_three]
+  simp [gMatrix]
+  ring
+
+theorem gMatrix_injective (φ : AutSL3 F)
+    (v1 v2 v3 : Fin 3 → F)
+    (hv1 : v1 ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv2 : v2 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv3 : v3 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv1' : v1 ≠ 0) (hv2' : v2 ≠ 0) (hv3' : v3 ≠ 0) :
+    Function.Injective (gMatrix F v1 v2 v3).mulVec := by
+  intro x y hxy
+  rw [gMatrix_mulVec_general, gMatrix_mulVec_general] at hxy
+  have heq : (x 0 - y 0) • v1 + (x 1 - y 1) • v2 + (x 2 - y 2) • v3 = 0 := by
+    rw [sub_smul, sub_smul, sub_smul]
+    rw [show x 0 • v1 - y 0 • v1 + (x 1 • v2 - y 1 • v2) + (x 2 • v3 - y 2 • v3) =
+      (x 0 • v1 + x 1 • v2 + x 2 • v3) - (y 0 • v1 + y 1 • v2 + y 2 • v3) from by abel]
+    rw [hxy, sub_self]
+  have key := linearIndependent_v1_v2_v3 F φ hv1 hv2 hv3 hv1' hv2' hv3'
+    (x 0 - y 0) (x 1 - y 1) (x 2 - y 2) heq
+  funext j
+  fin_cases j
+  · exact sub_eq_zero.mp key.1
+  · exact sub_eq_zero.mp key.2.1
+  · exact sub_eq_zero.mp key.2.2
+
+omit [Invertible (2 : F)] in
+theorem gMatrix_det_ne_zero (v1 v2 v3 : Fin 3 → F)
+    (hinj : Function.Injective (gMatrix F v1 v2 v3).mulVec) :
+    (gMatrix F v1 v2 v3).det ≠ 0 := by
+  intro hdet
+  obtain ⟨v, hv_ne, hv_zero⟩ := Matrix.exists_mulVec_eq_zero_iff.mpr hdet
+  apply hv_ne
+  have h0 : (gMatrix F v1 v2 v3).mulVec 0 = 0 := Matrix.mulVec_zero _
+  exact hinj (hv_zero.trans h0.symm)
+
+omit [Invertible (2 : F)] in
+theorem gMatrix_isUnit (v1 v2 v3 : Fin 3 → F)
+    (hinj : Function.Injective (gMatrix F v1 v2 v3).mulVec) :
+    IsUnit (gMatrix F v1 v2 v3) :=
+  (Matrix.isUnit_iff_isUnit_det _).mpr (Ne.isUnit (gMatrix_det_ne_zero F v1 v2 v3 hinj))
+
+omit [Invertible (2 : F)] in
+theorem tauLin_apply_eq_mulVec (τ : Matrix (Fin 3) (Fin 3) F) (x : Fin 3 → F) :
+    tauLin F τ x = τ.mulVec x := by
+  unfold tauLin
+  rw [Matrix.toLinAlgEquiv'_apply]
+
+omit [Invertible (2 : F)] in
+theorem d1_mulVec_e1 : (d1 F).mulVec (e1 F) = e1 F := by
+  funext i
+  show ∑ j, (d1 F) i j * (e1 F) j = (e1 F) i
+  rw [Fin.sum_univ_three]
+  fin_cases i <;> simp [d1, e1, Matrix.diagonal]
+
+omit [Invertible (2 : F)] in
+theorem d1_mulVec_e2 : (d1 F).mulVec (e2 F) = -(e2 F) := by
+  funext i
+  show ∑ j, (d1 F) i j * (e2 F) j = -(e2 F) i
+  rw [Fin.sum_univ_three]
+  fin_cases i <;> simp [d1, e2, Matrix.diagonal]
+
+omit [Invertible (2 : F)] in
+theorem d1_mulVec_e3 : (d1 F).mulVec (e3 F) = -(e3 F) := by
+  funext i
+  show ∑ j, (d1 F) i j * (e3 F) j = -(e3 F) i
+  rw [Fin.sum_univ_three]
+  fin_cases i <;> simp [d1, e3, Matrix.diagonal]
+
+omit [Invertible (2 : F)] in
+theorem d2_mulVec_e1 : (d2 F).mulVec (e1 F) = -(e1 F) := by
+  funext i
+  show ∑ j, (d2 F) i j * (e1 F) j = -(e1 F) i
+  rw [Fin.sum_univ_three]
+  fin_cases i <;> simp [d2, e1, Matrix.diagonal]
+
+omit [Invertible (2 : F)] in
+theorem d2_mulVec_e2 : (d2 F).mulVec (e2 F) = e2 F := by
+  funext i
+  show ∑ j, (d2 F) i j * (e2 F) j = (e2 F) i
+  rw [Fin.sum_univ_three]
+  fin_cases i <;> simp [d2, e2, Matrix.diagonal]
+
+omit [Invertible (2 : F)] in
+theorem d2_mulVec_e3 : (d2 F).mulVec (e3 F) = -(e3 F) := by
+  funext i
+  show ∑ j, (d2 F) i j * (e3 F) j = -(e3 F) i
+  rw [Fin.sum_univ_three]
+  fin_cases i <;> simp [d2, e3, Matrix.diagonal]
+
+omit [Invertible (2 : F)] in
+theorem mulVec_e1_eq_col0 (M : Matrix (Fin 3) (Fin 3) F) :
+    M.mulVec (e1 F) = fun i => M i 0 := by
+  funext i
+  show ∑ j, M i j * (e1 F) j = M i 0
+  rw [Fin.sum_univ_three]
+  simp [e1]
+
+omit [Invertible (2 : F)] in
+theorem mulVec_e2_eq_col1 (M : Matrix (Fin 3) (Fin 3) F) :
+    M.mulVec (e2 F) = fun i => M i 1 := by
+  funext i
+  show ∑ j, M i j * (e2 F) j = M i 1
+  rw [Fin.sum_univ_three]
+  simp [e2]
+
+omit [Invertible (2 : F)] in
+theorem mulVec_e3_eq_col2 (M : Matrix (Fin 3) (Fin 3) F) :
+    M.mulVec (e3 F) = fun i => M i 2 := by
+  funext i
+  show ∑ j, M i j * (e3 F) j = M i 2
+  rw [Fin.sum_univ_three]
+  simp [e3]
+
+omit [Invertible (2 : F)] in
+theorem matrix_ext_of_mulVec_e (M N : Matrix (Fin 3) (Fin 3) F)
+    (h1 : M.mulVec (e1 F) = N.mulVec (e1 F))
+    (h2 : M.mulVec (e2 F) = N.mulVec (e2 F))
+    (h3 : M.mulVec (e3 F) = N.mulVec (e3 F)) : M = N := by
+  rw [mulVec_e1_eq_col0, mulVec_e1_eq_col0] at h1
+  rw [mulVec_e2_eq_col1, mulVec_e2_eq_col1] at h2
+  rw [mulVec_e3_eq_col2, mulVec_e3_eq_col2] at h3
+  ext i j
+  fin_cases j
+  · exact congrFun h1 i
+  · exact congrFun h2 i
+  · exact congrFun h3 i
+
+theorem tau1_mul_gMatrix_eq (φ : AutSL3 F)
+    (v1 v2 v3 : Fin 3 → F)
+    (hv1 : v1 ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv2 : v2 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv3 : v3 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) :
+    (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) * gMatrix F v1 v2 v3 =
+      gMatrix F v1 v2 v3 * d1 F := by
+  apply matrix_ext_of_mulVec_e
+  · rw [← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, d1_mulVec_e1, gMatrix_mulVec_e1,
+      ← tauLin_apply_eq_mulVec]
+    exact mem_range_pIdemLin_iff_eigen F _ (tau1_mul_self F φ) v1 hv1.1
+  · rw [← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, d1_mulVec_e2, Matrix.mulVec_neg,
+      gMatrix_mulVec_e2, ← tauLin_apply_eq_mulVec]
+    exact mem_range_qIdemLin_iff_eigen F _ (tau1_mul_self F φ) v2 hv2.1
+  · rw [← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, d1_mulVec_e3, Matrix.mulVec_neg,
+      gMatrix_mulVec_e3, ← tauLin_apply_eq_mulVec]
+    exact mem_range_qIdemLin_iff_eigen F _ (tau1_mul_self F φ) v3 hv3.1
+
+theorem tau2_mul_gMatrix_eq (φ : AutSL3 F)
+    (v1 v2 v3 : Fin 3 → F)
+    (hv1 : v1 ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv2 : v2 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv3 : v3 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F))) :
+    (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) * gMatrix F v1 v2 v3 =
+      gMatrix F v1 v2 v3 * d2 F := by
+  apply matrix_ext_of_mulVec_e
+  · rw [← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, d2_mulVec_e1, Matrix.mulVec_neg,
+      gMatrix_mulVec_e1, ← tauLin_apply_eq_mulVec]
+    exact mem_range_qIdemLin_iff_eigen F _ (tau2_mul_self F φ) v1 hv1.2
+  · rw [← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, d2_mulVec_e2, gMatrix_mulVec_e2,
+      ← tauLin_apply_eq_mulVec]
+    exact mem_range_pIdemLin_iff_eigen F _ (tau2_mul_self F φ) v2 hv2.2
+  · rw [← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, d2_mulVec_e3, Matrix.mulVec_neg,
+      gMatrix_mulVec_e3, ← tauLin_apply_eq_mulVec]
+    exact mem_range_qIdemLin_iff_eigen F _ (tau2_mul_self F φ) v3 hv3.2
+
+theorem g_inv_mul_tau1_mul_g (φ : AutSL3 F)
+    (v1 v2 v3 : Fin 3 → F)
+    (hv1 : v1 ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv2 : v2 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv3 : v3 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hinj : Function.Injective (gMatrix F v1 v2 v3).mulVec) :
+    (gMatrix F v1 v2 v3)⁻¹ * (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) * gMatrix F v1 v2 v3 =
+      d1 F := by
+  have heq := tau1_mul_gMatrix_eq F φ v1 v2 v3 hv1 hv2 hv3
+  have hnonsing : (gMatrix F v1 v2 v3)⁻¹ * gMatrix F v1 v2 v3 = 1 :=
+    Matrix.nonsing_inv_mul _ ((Matrix.isUnit_iff_isUnit_det _).mp (gMatrix_isUnit F v1 v2 v3 hinj))
+  rw [mul_assoc, heq, ← mul_assoc, hnonsing, one_mul]
+
+theorem g_inv_mul_tau2_mul_g (φ : AutSL3 F)
+    (v1 v2 v3 : Fin 3 → F)
+    (hv1 : v1 ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv2 : v2 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv3 : v3 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hinj : Function.Injective (gMatrix F v1 v2 v3).mulVec) :
+    (gMatrix F v1 v2 v3)⁻¹ * (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) * gMatrix F v1 v2 v3 =
+      d2 F := by
+  have heq := tau2_mul_gMatrix_eq F φ v1 v2 v3 hv1 hv2 hv3
+  have hnonsing : (gMatrix F v1 v2 v3)⁻¹ * gMatrix F v1 v2 v3 = 1 :=
+    Matrix.nonsing_inv_mul _ ((Matrix.isUnit_iff_isUnit_det _).mp (gMatrix_isUnit F v1 v2 v3 hinj))
+  rw [mul_assoc, heq, ← mul_assoc, hnonsing, one_mul]
+
+omit [Invertible (2 : F)] in
+theorem conj_mul_eq (g A B : Matrix (Fin 3) (Fin 3) F) (hg_mul : g * g⁻¹ = 1) :
+    g⁻¹ * (A * B) * g = (g⁻¹ * A * g) * (g⁻¹ * B * g) := by
+  have step : (g⁻¹ * A * g) * (g⁻¹ * B * g) = g⁻¹ * A * (g * g⁻¹) * B * g := by
+    simp only [mul_assoc]
+  rw [step, hg_mul, mul_one]
+  simp only [mul_assoc]
+
+theorem g_inv_mul_tau3_mul_g (φ : AutSL3 F)
+    (v1 v2 v3 : Fin 3 → F)
+    (hv1 : v1 ∈ LinearMap.range (pIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv2 : v2 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (pIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hv3 : v3 ∈ LinearMap.range (qIdemLin F (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F)) ⊓
+        LinearMap.range (qIdemLin F (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F)))
+    (hinj : Function.Injective (gMatrix F v1 v2 v3).mulVec) :
+    (gMatrix F v1 v2 v3)⁻¹ * (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F) * gMatrix F v1 v2 v3 =
+      d3 F := by
+  have hg_mul : gMatrix F v1 v2 v3 * (gMatrix F v1 v2 v3)⁻¹ = 1 :=
+    Matrix.mul_nonsing_inv _ ((Matrix.isUnit_iff_isUnit_det _).mp (gMatrix_isUnit F v1 v2 v3 hinj))
+  have h3 : (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F) =
+      (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) * (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) :=
+    (tau1_mul_tau2_eq_tau3 F φ).symm
+  have hd3 : d3 F = d1 F * d2 F := by
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      simp [d1, d2, d3, Matrix.diagonal, Matrix.mul_apply, Fin.sum_univ_three]
+  rw [h3, hd3, conj_mul_eq F (gMatrix F v1 v2 v3) _ _ hg_mul,
+    g_inv_mul_tau1_mul_g F φ v1 v2 v3 hv1 hv2 hv3 hinj,
+    g_inv_mul_tau2_mul_g F φ v1 v2 v3 hv1 hv2 hv3 hinj]
+
+
+/-! ### Final assembly
+
+Package `(gMatrix v1 v2 v3)⁻¹` directly as a `Units` (val/inv given explicitly, so the
+two coercions `↑g` and `↑g⁻¹` are the relevant matrices *by definition*, no extra
+rewriting needed), and discharge the three conjugation identities via
+`g_inv_mul_tauᵢ_mul_g`. -/
+
 theorem diag_preserved_after_change_of_basis
     (φ : AutSL3 F) :
     ∃ g : GL3 F,
-      innerAutSL3byGL3 F g (φ (d1SL F)) = d1SL F ∧
-      innerAutSL3byGL3 F g (φ (d2SL F)) = d2SL F ∧
-      innerAutSL3byGL3 F g (φ (d3SL F)) = d3SL F := by
-  sorry
-
+      innerAutSL3byGL3 g (φ (d1SL F)) = d1SL F ∧
+      innerAutSL3byGL3 g (φ (d2SL F)) = d2SL F ∧
+      innerAutSL3byGL3 g (φ (d3SL F)) = d3SL F := by
+  obtain ⟨v1, hv1, hv1'⟩ := exists_v1 F φ
+  obtain ⟨v2, hv2, hv2'⟩ := exists_v2 F φ
+  obtain ⟨v3, hv3, hv3'⟩ := exists_v3 F φ
+  have hinj := gMatrix_injective F φ v1 v2 v3 hv1 hv2 hv3 hv1' hv2' hv3'
+  have hdetu : IsUnit (gMatrix F v1 v2 v3).det :=
+    (Matrix.isUnit_iff_isUnit_det _).mp (gMatrix_isUnit F v1 v2 v3 hinj)
+  have hvi : (gMatrix F v1 v2 v3)⁻¹ * gMatrix F v1 v2 v3 = 1 :=
+    Matrix.nonsing_inv_mul _ hdetu
+  have hiv : gMatrix F v1 v2 v3 * (gMatrix F v1 v2 v3)⁻¹ = 1 :=
+    Matrix.mul_nonsing_inv _ hdetu
+  refine ⟨⟨(gMatrix F v1 v2 v3)⁻¹, gMatrix F v1 v2 v3, hvi, hiv⟩, ?_, ?_, ?_⟩
+  · apply Subtype.ext
+    show (gMatrix F v1 v2 v3)⁻¹ * (φ (d1SL F) : Matrix (Fin 3) (Fin 3) F) *
+        gMatrix F v1 v2 v3 = d1 F
+    exact g_inv_mul_tau1_mul_g F φ v1 v2 v3 hv1 hv2 hv3 hinj
+  · apply Subtype.ext
+    show (gMatrix F v1 v2 v3)⁻¹ * (φ (d2SL F) : Matrix (Fin 3) (Fin 3) F) *
+        gMatrix F v1 v2 v3 = d2 F
+    exact g_inv_mul_tau2_mul_g F φ v1 v2 v3 hv1 hv2 hv3 hinj
+  · apply Subtype.ext
+    show (gMatrix F v1 v2 v3)⁻¹ * (φ (d3SL F) : Matrix (Fin 3) (Fin 3) F) *
+        gMatrix F v1 v2 v3 = d3 F
+    exact g_inv_mul_tau3_mul_g F φ v1 v2 v3 hv1 hv2 hv3 hinj
 
 def w1 : Matrix (Fin 3) (Fin 3) (R) :=
     !![0, 1, 0;
@@ -209,14 +1529,14 @@ def w2SL : SL3 R :=
 theorem w_preserved
     (φ : AutSL3 F) :
     ∃ g : GL3 F,
-      innerAutSL3byGL3 F g (φ (d1SL F)) = d1SL F ∧
-      innerAutSL3byGL3 F g (φ (d2SL F)) = d2SL F ∧
-      innerAutSL3byGL3 F g (φ (d3SL F)) = d3SL F ∧
-      innerAutSL3byGL3 F g (φ (w1SL F)) = w1SL F ∧
-      innerAutSL3byGL3 F g (φ (w2SL F)) = w2SL F := by
+      innerAutSL3byGL3 g (φ (d1SL F)) = d1SL F ∧
+      innerAutSL3byGL3 g (φ (d2SL F)) = d2SL F ∧
+      innerAutSL3byGL3 g (φ (d3SL F)) = d3SL F ∧
+      innerAutSL3byGL3 g (φ (w1SL F)) = w1SL F ∧
+      innerAutSL3byGL3 g (φ (w2SL F)) = w2SL F := by
   rcases diag_preserved_after_change_of_basis F φ with ⟨g, hd1, hd2, hd3⟩
-  let v1 := (innerAutSL3byGL3 F g (φ (w1SL F))).val
-  let v2 := (innerAutSL3byGL3 F g (φ (w2SL F))).val
+  let v1 := (innerAutSL3byGL3 g (φ (w1SL F))).val
+  let v2 := (innerAutSL3byGL3 g (φ (w2SL F))).val
   have hv1: ∃ l : F, IsUnit l ∧ v1 =
     !![0,    l, 0;
        -l⁻¹, 0, 0;
@@ -231,8 +1551,8 @@ theorem w_preserved
               v1 1 0,  v1 1 1,  -v1 1 2;
               -v1 2 0, -v1 2 1, v1 2 2] i j = v1 i j := by
         have: (d3 F) * v1 * (d3 F) = v1 := by
-          have: (innerAutSL3byGL3 F g (φ ((d3SL F) * (w1SL F) * (d3SL F)))) =
-                 innerAutSL3byGL3 F g (φ (w1SL F)) := by
+          have: (innerAutSL3byGL3 g (φ ((d3SL F) * (w1SL F) * (d3SL F)))) =
+                 innerAutSL3byGL3 g (φ (w1SL F)) := by
             have: (d3SL F) * (w1SL F) * (d3SL F) = w1SL F := by
               have: (d3 F) * (w1 F) * (d3 F) = w1 F := by
                 rw [w1, d3, diagonal_fin_three, mul_fin_three, mul_fin_three]
@@ -248,18 +1568,18 @@ theorem w_preserved
         simp
       ext i j
       fin_cases i <;> fin_cases j <;> simp
-      · exact (zero_iff_eq_neg_self _).mpr (this 0 2).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 1 2).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 2 0).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 2 1).symm
+      · exact zero_iff_eq_neg_self.mpr (this 0 2).symm
+      · exact zero_iff_eq_neg_self.mpr (this 1 2).symm
+      · exact zero_iff_eq_neg_self.mpr (this 2 0).symm
+      · exact zero_iff_eq_neg_self.mpr (this 2 1).symm
     have second_rep:
           !![0,      v1 0 1, 0;
              v1 1 0, 0,      0;
              0,      0,      v1 2 2] = v1 := by
       have: v1 * (d1 F) = (d2 F) * v1 := by
         have: v1 * (d1SL F) = (d2SL F) * v1 := by
-          have: (innerAutSL3byGL3 F g (φ ((w1SL F) * (d1SL F)))) =
-                innerAutSL3byGL3 F g (φ ((d2SL F) * (w1SL F))) := by
+          have: (innerAutSL3byGL3 g (φ ((w1SL F) * (d1SL F)))) =
+                innerAutSL3byGL3 g (φ ((d2SL F) * (w1SL F))) := by
             have: (w1SL F) * (d1SL F) = (d2SL F) * (w1SL F) := by
               have: (w1 F) * (d1 F) = (d2 F) * (w1 F) := by
                 rw [w1, d1, d2, diagonal_fin_three, diagonal_fin_three]
@@ -275,8 +1595,8 @@ theorem w_preserved
       nth_rw 4 [← first_rep]
       ext i j
       fin_cases i <;> fin_cases j <;> simp
-      · exact (zero_iff_eq_neg_self _).mpr this.left
-      · exact (zero_iff_eq_neg_self _).mpr this.right.symm
+      · exact zero_iff_eq_neg_self.mpr this.left
+      · exact zero_iff_eq_neg_self.mpr this.right.symm
     have det_v1: det v1 = 1 := by
       rw [SpecialLinearGroup.det_coe]
     have not_zero_v101: IsUnit (v1 0 1) := by
@@ -290,8 +1610,8 @@ theorem w_preserved
              0,           0,      1] = v1 := by
       nth_rw 3 [← second_rep]
       have: v1 * v1 = d3 F := by
-        have: (innerAutSL3byGL3 F g (φ ((w1SL F) * (w1SL F)))) =
-              innerAutSL3byGL3 F g (φ (d3SL F)) := by
+        have: (innerAutSL3byGL3 g (φ ((w1SL F) * (w1SL F)))) =
+              innerAutSL3byGL3 g (φ (d3SL F)) := by
           have: (w1SL F) * (w1SL F) = (d3SL F) := by
             have: (w1 F) * (w1 F) = (d3 F) := by
               rw [w1, d3, diagonal_fin_three, mul_fin_three]
@@ -329,8 +1649,8 @@ theorem w_preserved
               -v2 1 0,  v2 1 1,   v2 1 2;
               -v2 2 0,  v2 2 1,   v2 2 2] i j = v2 i j := by
         have: (d1 F) * v2 * (d1 F) = v2 := by
-          have: (innerAutSL3byGL3 F g (φ ((d1SL F) * (w2SL F) * (d1SL F)))) =
-                 innerAutSL3byGL3 F g (φ (w2SL F)) := by
+          have: (innerAutSL3byGL3 g (φ ((d1SL F) * (w2SL F) * (d1SL F)))) =
+                 innerAutSL3byGL3 g (φ (w2SL F)) := by
             have: (d1SL F) * (w2SL F) * (d1SL F) = w2SL F := by
               have: (d1 F) * (w2 F) * (d1 F) = w2 F := by
                 rw [w2, d1, diagonal_fin_three, mul_fin_three, mul_fin_three]
@@ -346,18 +1666,18 @@ theorem w_preserved
         simp
       ext i j
       fin_cases i <;> fin_cases j <;> simp
-      · exact (zero_iff_eq_neg_self _).mpr (this 0 1).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 0 2).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 1 0).symm
-      · exact (zero_iff_eq_neg_self _).mpr (this 2 0).symm
+      · exact zero_iff_eq_neg_self.mpr (this 0 1).symm
+      · exact zero_iff_eq_neg_self.mpr (this 0 2).symm
+      · exact zero_iff_eq_neg_self.mpr (this 1 0).symm
+      · exact zero_iff_eq_neg_self.mpr (this 2 0).symm
     have second_rep:
           !![v2 0 0, 0,      0;
              0,      0, v2 1 2;
              0,      v2 2 1, 0] = v2 := by
       have: v2 * (d3 F) = (d2 F) * v2 := by
         have: v2 * (d3SL F) = (d2SL F) * v2 := by
-          have: (innerAutSL3byGL3 F g (φ ((w2SL F) * (d3SL F)))) =
-                innerAutSL3byGL3 F g (φ ((d2SL F) * (w2SL F))) := by
+          have: (innerAutSL3byGL3 g (φ ((w2SL F) * (d3SL F)))) =
+                innerAutSL3byGL3 g (φ ((d2SL F) * (w2SL F))) := by
             have: (w2SL F) * (d3SL F) = (d2SL F) * (w2SL F) := by
               have: (w2 F) * (d3 F) = (d2 F) * (w2 F) := by
                 rw [w2, d3, d2, diagonal_fin_three, diagonal_fin_three]
@@ -373,8 +1693,8 @@ theorem w_preserved
       nth_rw 4 [← first_rep]
       ext i j
       fin_cases i <;> fin_cases j <;> simp
-      · exact (zero_iff_eq_neg_self _).mpr this.left.symm
-      · exact (zero_iff_eq_neg_self _).mpr this.right
+      · exact zero_iff_eq_neg_self.mpr this.left.symm
+      · exact zero_iff_eq_neg_self.mpr this.right
     have det_v2: det v2 = 1 := by
       rw [SpecialLinearGroup.det_coe]
     have not_zero_v212: IsUnit (v2 1 2) := by
@@ -388,8 +1708,8 @@ theorem w_preserved
              0, -(v2 1 2)⁻¹, 0] = v2 := by
       nth_rw 3 [← second_rep]
       have: v2 * v2 = d1 F := by
-        have: (innerAutSL3byGL3 F g (φ ((w2SL F) * (w2SL F)))) =
-              innerAutSL3byGL3 F g (φ (d1SL F)) := by
+        have: (innerAutSL3byGL3 g (φ ((w2SL F) * (w2SL F)))) =
+              innerAutSL3byGL3 g (φ (d1SL F)) := by
           have: (w2SL F) * (w2SL F) = (d1SL F) := by
             have: (w2 F) * (w2 F) = (d1 F) := by
               rw [w2, d1, diagonal_fin_three, mul_fin_three]
@@ -434,48 +1754,28 @@ theorem w_preserved
       ⟩
   simp only [innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk, Units.inv_mk]
   have diag_preserved:
-    g * SpecialLinearGroup.toGL (φ (d1SL F)) * g⁻¹ = d1 F ∧
-    g * SpecialLinearGroup.toGL (φ (d2SL F)) * g⁻¹ = d2 F ∧
-    g * SpecialLinearGroup.toGL (φ (d3SL F)) * g⁻¹ = d3 F :=
+    g * (φ (d1SL F)).toGL * g⁻¹ = d1 F ∧
+    g * (φ (d2SL F)).toGL * g⁻¹ = d2 F ∧
+    g * (φ (d3SL F)).toGL * g⁻¹ = d3 F :=
       ⟨ congrArg Subtype.val hd1, congrArg Subtype.val hd2, congrArg Subtype.val hd3 ⟩
-  exact ⟨
-    by
-      congr
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], diag_preserved.left, d1, diagonal_fin_three]
-      simp
-      exact ⟨ l1unit.inv_mul_cancel, l2unit.mul_inv_cancel ⟩,
-    by
-      congr
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], diag_preserved.right.left, d2,
-          diagonal_fin_three]
-      simp
-      exact ⟨ l1unit.inv_mul_cancel, l2unit.mul_inv_cancel ⟩,
-    by
-      congr
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], diag_preserved.right.right, d3,
-          diagonal_fin_three]
-      simp
-      exact ⟨ l1unit.inv_mul_cancel, l2unit.mul_inv_cancel ⟩,
-    by
-      congr
-      simp only [v1, innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk] at hl1
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], hl1, w1, mul_fin_three, mul_fin_three]
-      simp only [zero_mul, add_zero, mul_zero, zero_add]
-      rw [mul_one, mul_one, one_mul, neg_eq_neg_one_mul, mul_assoc, l2unit.mul_inv_cancel,
-          l1unit.inv_mul_cancel, mul_one],
-    by
-      congr
-      simp only [v2, innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk] at hl2
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], hl2, w2, mul_fin_three, mul_fin_three]
-      simp only [zero_mul, add_zero, mul_zero, zero_add]
-      rw [mul_one, mul_one, one_mul, neg_eq_neg_one_mul, ← mul_assoc, mul_comm _ (-1), mul_assoc,
-          l2unit.mul_inv_cancel, l1unit.inv_mul_cancel, mul_one]
-  ⟩
+  simp only [v1, innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk] at hl1
+  simp only [v2, innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk] at hl2
+  repeat' constructor
+  all_goals congr
+  all_goals rw [
+      ← mul_assoc,
+      mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
+      mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2]
+    ]
+  any_goals simp only [diag_preserved, d1, d2, d3, diagonal_fin_three]
+  · simp [l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+  · simp [l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+  · simp [l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+  · rw [mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], hl1, w1, mul_fin_three, mul_fin_three]
+    simp [zero_mul, add_zero, mul_zero, zero_add, l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+  · rw [mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], hl2, w2, mul_fin_three, mul_fin_three]
+    simp [zero_mul, add_zero, mul_zero, zero_add, l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+
 
 
 def x12 : Matrix (Fin 3) (Fin 3) R :=
@@ -502,8 +1802,24 @@ def x23 : Matrix (Fin 3) (Fin 3) R :=
 def x23SL : SL3 R :=
   ⟨x23 R, by simp [x23, Matrix.det_fin_three]⟩
 
-def graphChoiceSL3 (ε : Bool) : AutSL3 R :=
-  if ε then invTransposeAutSL3 R else (1 : AutSL3 R)
+def x32 : Matrix (Fin 3) (Fin 3) R :=
+  !![1, 0, 0;
+     0, 1, 0;
+     0, 1, 1]
+
+def x32SL : SL3 R :=
+  ⟨x32 R, by simp [x32, Matrix.det_fin_three]⟩
+
+def x32' : Matrix (Fin 3) (Fin 3) R :=
+  !![1, 0, 0;
+     0, 1, 0;
+     0, -1, 1]
+
+def x32SL' : SL3 R :=
+  ⟨x32' R, by simp [x32', Matrix.det_fin_three]⟩
+
+def graphChoiceSL3 {R : Type*} [CommRing R] (ε : Bool) : AutSL3 R :=
+  if ε then invTransposeAutSL3 else (1 : AutSL3 R)
 
 /--
 # Preservation of Standard Matrices under Contragredient
@@ -517,14 +1833,14 @@ specific matrices `A`, we show that `Aᵀ * A = 1`. By the uniqueness of inverse
 `A⁻¹ = Aᵀ`, which means `Λ(A) = (Aᵀ)ᵀ = A`.
 -/
 theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
-    invTransposeAutSL3 F (d1SL F) = d1SL F ∧
-    invTransposeAutSL3 F (d2SL F) = d2SL F ∧
-    invTransposeAutSL3 F (d3SL F) = d3SL F ∧
-    invTransposeAutSL3 F (w1SL F) = w1SL F ∧
-    invTransposeAutSL3 F (w2SL F) = w2SL F := by
+    invTransposeAutSL3 (d1SL F) = d1SL F ∧
+    invTransposeAutSL3 (d2SL F) = d2SL F ∧
+    invTransposeAutSL3 (d3SL F) = d3SL F ∧
+    invTransposeAutSL3 (w1SL F) = w1SL F ∧
+    invTransposeAutSL3 (w2SL F) = w2SL F := by
 
   -- We prove preservation for d₁ by demonstrating that d₁ᵀ * d₁ = 1.
-  have hd1 : invTransposeAutSL3 F (d1SL F) = d1SL F := by
+  have hd1 : invTransposeAutSL3 (d1SL F) = d1SL F := by
     -- We explicitly construct the transpose of d₁ as an SL₃ element.
     let d1T_SL : SL3 F := ⟨(d1 F).transpose, by rw [Matrix.det_transpose]; exact (d1SL F).property⟩
 
@@ -551,7 +1867,7 @@ theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
     ext i j; rfl
 
   -- We apply the exact same inverse-transpose cancellation logic for d₂.
-  have hd2 : invTransposeAutSL3 F (d2SL F) = d2SL F := by
+  have hd2 : invTransposeAutSL3 (d2SL F) = d2SL F := by
     let d2T_SL : SL3 F := ⟨(d2 F).transpose, by rw [Matrix.det_transpose]; exact (d2SL F).property⟩
     have h_mul : d2T_SL * d2SL F = 1 := by
       apply Subtype.ext
@@ -569,7 +1885,7 @@ theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
     ext i j; rfl
 
   -- We apply the exact same inverse-transpose cancellation logic for d₃.
-  have hd3 : invTransposeAutSL3 F (d3SL F) = d3SL F := by
+  have hd3 : invTransposeAutSL3 (d3SL F) = d3SL F := by
     let d3T_SL : SL3 F := ⟨(d3 F).transpose, by rw [Matrix.det_transpose]; exact (d3SL F).property⟩
     have h_mul : d3T_SL * d3SL F = 1 := by
       apply Subtype.ext
@@ -587,7 +1903,7 @@ theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
     ext i j; rfl
 
   -- We apply the exact same inverse-transpose cancellation logic for the matrix w₁.
-  have hw1 : invTransposeAutSL3 F (w1SL F) = w1SL F := by
+  have hw1 : invTransposeAutSL3 (w1SL F) = w1SL F := by
     let w1T_SL : SL3 F := ⟨(w1 F).transpose, by rw [Matrix.det_transpose]; exact (w1SL F).property⟩
     have h_mul : w1T_SL * w1SL F = 1 := by
       apply Subtype.ext
@@ -605,7 +1921,7 @@ theorem invTranspose_preserves_d_w (F : Type*) [Field F] [Invertible (2 : F)] :
     ext i j; rfl
 
   -- We apply the exact same inverse-transpose cancellation logic for the matrix w₂.
-  have hw2 : invTransposeAutSL3 F (w2SL F) = w2SL F := by
+  have hw2 : invTransposeAutSL3 (w2SL F) = w2SL F := by
     let w2T_SL : SL3 F := ⟨(w2 F).transpose, by rw [Matrix.det_transpose]; exact (w2SL F).property⟩
     have h_mul : w2T_SL * w2SL F = 1 := by
       apply Subtype.ext
@@ -641,12 +1957,12 @@ We evaluate the commutator relation `[X₁₂, X₂₃] = X₁₃` to restrict t
    successfully flips `x₂₁(-1)` back to the standard `x₁₂(1)`.
 -/
 theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (d1SL F))) = d1SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (d2SL F))) = d2SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (d3SL F))) = d3SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (w1SL F))) = w1SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (w2SL F))) = w2SL F ∧
-      graphChoiceSL3 F ε (innerAutSL3byGL3 F g (φ (x12SL F))) = x12SL F := by
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F := by
 
   -- Get matrix g utilizing steps 1 and 2 for which the inner automorphism preserves
   -- d₁, ..., d₃, and w₁, ..., w₃. w₃ being preserved is given by w₁, and w₂ being
@@ -654,7 +1970,7 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
   rcases w_preserved F φ with ⟨g, hd1, hd2, hd3, hw1, hw2⟩
 
   -- Define φ₂ as the inner automorphism by g.
-  let φ2 : AutSL3 F := φ.trans (innerAutSL3byGL3 F g)
+  let φ2 : AutSL3 F := φ.trans (innerAutSL3byGL3 g)
 
   have hd1_φ2 : φ2 (d1SL F) = d1SL F := hd1
   have hd2_φ2 : φ2 (d2SL F) = d2SL F := hd2
@@ -689,25 +2005,25 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
     have h_entry : ((d3 F) * X12) 0 2 = (X12 * (d3 F)) 0 2 :=
       congrFun (congrFun h_comm_d3_X12 0) 2
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact (zero_if_eq_neg F h_entry.symm).symm
+    exact (zero_iff_eq_neg_self.mpr h_entry.symm).symm
 
   have hX12_12 : X12 1 2 = 0 := by
     have h_entry : ((d3 F) * X12) 1 2 = (X12 * (d3 F)) 1 2 :=
       congrFun (congrFun h_comm_d3_X12 1) 2
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact (zero_if_eq_neg F h_entry.symm).symm
+    exact (zero_iff_eq_neg_self.mpr h_entry.symm).symm
 
   have hX12_20 : X12 2 0 = 0 := by
     have h_entry : ((d3 F) * X12) 2 0 = (X12 * (d3 F)) 2 0 :=
       congrFun (congrFun h_comm_d3_X12 2) 0
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact (zero_if_eq_neg F h_entry).symm
+    exact (zero_iff_eq_neg_self.mpr h_entry).symm
 
   have hX12_21 : X12 2 1 = 0 := by
     have h_entry : ((d3 F) * X12) 2 1 = (X12 * (d3 F)) 2 1 :=
       congrFun (congrFun h_comm_d3_X12 2) 1
     simp [d3, Matrix.mul_apply, Matrix.diagonal_apply] at h_entry
-    exact (zero_if_eq_neg F h_entry).symm
+    exact (zero_iff_eq_neg_self.mpr h_entry).symm
 
   -- Similarly to before, we now prove that conjugation by d₁ of X₁₂ is its inverse.
   have h_inv_d1_X12 : (d1 F) * X12 * (d1 F) * X12 = 1 := by
@@ -1175,7 +2491,7 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
     -- Substitute b = 1 back into our shape for X₁₂ to definitively prove X₁₂ = x₁₂(1).
     have h_X12_eq_x12 : X12 = x12 F := by
       rw [hb_eq_1] at hX12_b
-      rw [hX12_b, FieldAutomorphisms.x12]
+      rw [hX12_b, x12]
 
     -- Convert the matrix equality back to an SL₃ equality mapped by φ₂.
     have h_x12_preserved_φ2 : φ2 (x12SL F) = x12SL F := Subtype.ext h_X12_eq_x12
@@ -1237,11 +2553,11 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
     -- We utilize our prior theorem to securely show that this map preserves d₁, d₂, d₃, w₁, and w₂.
     rcases invTranspose_preserves_d_w F with ⟨h_invT_d1, h_invT_d2, h_invT_d3, h_invT_w1, h_invT_w2⟩
 
-    have h_phi3_d1 : graphChoiceSL3 F true (φ2 (d1SL F)) = d1SL F := by rw [hd1_φ2]; exact h_invT_d1
-    have h_phi3_d2 : graphChoiceSL3 F true (φ2 (d2SL F)) = d2SL F := by rw [hd2_φ2]; exact h_invT_d2
-    have h_phi3_d3 : graphChoiceSL3 F true (φ2 (d3SL F)) = d3SL F := by rw [hd3_φ2]; exact h_invT_d3
-    have h_phi3_w1 : graphChoiceSL3 F true (φ2 (w1SL F)) = w1SL F := by rw [hw1_φ2]; exact h_invT_w1
-    have h_phi3_w2 : graphChoiceSL3 F true (φ2 (w2SL F)) = w2SL F := by rw [hw2_φ2]; exact h_invT_w2
+    have h_phi3_d1 : graphChoiceSL3 true (φ2 (d1SL F)) = d1SL F := by rw [hd1_φ2]; exact h_invT_d1
+    have h_phi3_d2 : graphChoiceSL3 true (φ2 (d2SL F)) = d2SL F := by rw [hd2_φ2]; exact h_invT_d2
+    have h_phi3_d3 : graphChoiceSL3 true (φ2 (d3SL F)) = d3SL F := by rw [hd3_φ2]; exact h_invT_d3
+    have h_phi3_w1 : graphChoiceSL3 true (φ2 (w1SL F)) = w1SL F := by rw [hw1_φ2]; exact h_invT_w1
+    have h_phi3_w2 : graphChoiceSL3 true (φ2 (w2SL F)) = w2SL F := by rw [hw2_φ2]; exact h_invT_w2
 
     -- Finally, we apply the contragredient automorphism to X₁₂ = x₂₁(-1) to flip it to x₁₂(1).
     -- We isolate the explicit Matrix inversion away from the opaque SL₃ inversion.
@@ -1261,44 +2577,683 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
 
     -- We step the goal down to the matrix definitions, apply the known inverse,
     -- and let the transpose physically flip x₂₁(-1) to x₁₂(1).
-    have h_phi3_x12 : graphChoiceSL3 F true (φ2 (x12SL F)) = x12SL F := by
-      change invTransposeMap F (φ2 (x12SL F)) = x12SL F
+    have h_phi3_x12 : graphChoiceSL3 true (φ2 (x12SL F)) = x12SL F := by
+      change invTransposeMap (φ2 (x12SL F)) = x12SL F
       apply Subtype.ext
       change (((φ2 (x12SL F))⁻¹ : SL3 F) : Matrix (Fin 3) (Fin 3) F).transpose = x12 F
       rw [hX12_inv]
       change (!![1, 0, 0; 1, 1, 0; 0, 0, 1] : Matrix (Fin 3) (Fin 3) F).transpose = x12 F
       ext i j; fin_cases i <;> fin_cases j <;>
-        simp [FieldAutomorphisms.x12, Matrix.transpose_apply, of_apply, cons_val, Fin.reduceFinMk]
+        simp [x12, Matrix.transpose_apply, of_apply, cons_val, Fin.reduceFinMk]
 
     -- Provide the witness utilizing ε = true to deploy the contragredient automorphism mapping.
     use g, true
     exact ⟨h_phi3_d1, h_phi3_d2, h_phi3_d3, h_phi3_w1, h_phi3_w2, h_phi3_x12⟩
 
 
-def IsTransvectionSL3 (x : SL3 R) : Prop :=
-  ∃ i j : Fin 3, ∃ c : R,
-    i ≠ j ∧
-    (x : Matrix (Fin 3) (Fin 3) R) =
-      Matrix.transvection i j c
+theorem all_xij1_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x13SL F))) = x13SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x23SL F))) = x23SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x32SL' F))) = x32SL' F := by
+  rcases x12_preserved F φ with ⟨g, ε, ⟨hgd1, hgd2, hgd3, hgw1, hgw2, hgx12⟩⟩
+  use g, ε
+  have cong_x13 : x13SL F = (w2SL F)⁻¹ * x12SL F * w2SL F := by
+    apply Subtype.ext
+    simp [x12SL, x13SL, w2SL, x13, x12, w2]
+  have cong_x23 : x23SL F = (w1SL F) * (w2SL F) * x12SL F * (w2SL F)⁻¹ * (w1SL F)⁻¹ := by
+    apply Subtype.ext
+    simp [x12SL, x23SL, w1SL, w2SL, x23, x12, w1, w2]
+  have cong_x32 : x32SL' F = (w2SL F) * (w1SL F) * (w2SL F) * x12SL F * (w2SL F)⁻¹ * (w1SL F)⁻¹ * (w2SL F)⁻¹ := by
+    apply Subtype.ext
+    simp [x12SL, x32SL', w1SL, w2SL, x12, w1, w2]
+    rfl
+  simp [*]
 
-theorem transv_to_transv_same_coeff (φ : AutSL3 (R)) :
-(φ (d1SL R)  = d1SL R ∧
-φ (d2SL R)  = d2SL R ∧
-φ (d3SL R)  = d3SL R ∧
-φ (w1SL R) = w1SL R ∧
-φ (w2SL R) = w2SL R ∧
-φ (x12SL R) = x12SL R) → ∃ (f : R ≃+* R), ∀ (E : SL3 R) , (IsTransvectionSL3 R E) → φ E = E.map f:= by sorry
+
+theorem TransvectionSL3_inv (i j : Fin 3) (x : R) (h : i ≠ j) :
+    (TransvectionSL3 i j x h)⁻¹ = TransvectionSL3 i j (-x) h := by
+  have : (TransvectionSL3 i j x h) * (TransvectionSL3 i j (-x) h) = 1 := by
+    apply Subtype.ext
+    simp [TransvectionSL3]
+    rw [transvection_mul_transvection_same]
+    simp
+    exact h
+  exact inv_eq_of_mul_eq_one_right this
 
 
+theorem TransvectionSL3_mul_TransvectionSL3_same {i j : Fin 3} {x y : R} {h : i ≠ j} :
+    TransvectionSL3 i j (x+y) h = (TransvectionSL3 i j x h) * (TransvectionSL3 i j y h) := by
+  apply Subtype.ext
+  simp [TransvectionSL3, transvection_mul_transvection_same i j h]
 
 
-theorem field_class
-    (φ : AutSL3 F) :
+theorem x12SL.eq_TransvectionSL3 : (x12SL R) = TransvectionSL3 0 1 1 (by simp) := by
+  apply Subtype.ext
+  simp [x12SL, x12, TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+theorem x13SL.eq_TransvectionSL3 : (x13SL R) = TransvectionSL3 0 2 1 (by simp) := by
+  apply Subtype.ext
+  simp [x13SL, x13, TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+theorem x23SL.eq_TransvectionSL3 : (x23SL R) = TransvectionSL3 1 2 1 (by simp) := by
+  apply Subtype.ext
+  simp [x23SL, x23, TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+theorem x32SL.eq_TransvectionSL3 : (x32SL R) = TransvectionSL3 2 1 1 (by simp) := by
+  apply Subtype.ext
+  simp [x32SL, x32, TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+theorem x32SL'.eq_TransvectionSL3 : (x32SL' R) = TransvectionSL3 2 1 (-1) (by simp) := by
+  apply Subtype.ext
+  simp [x32SL', x32', TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+
+theorem transv_comm_transv'
+    {R : Type*} [CommRing R]
+    (i j k l : Fin 3) (a b : R)
+    (hA : i ≠ j) (hB : k ≠ l)
+    (h1 : i ≠ l) (h2 : j ≠ k) :
+    transvection i j a * transvection k l b =
+    transvection k l b * transvection i j a := by
+  ext x y
+  simp [mul_apply, transvection, single, Fin.sum_univ_three]
+  have unequal_pair {u v : Fin 3} (h : u ≠ v) (t : Fin 3): ¬ ( u = t ∧ v = t) :=
+      fun ⟨l, r⟩ => h (Eq.trans l r.symm)
+  have abba : b * a = a * b := by ring
+  have reorder  {a b: R} (i' j' k' l' : Fin 3) :
+      (if k = k' ∧ l = l' then (if i = i' ∧ j = j' then a*b else 0) else 0) =
+      (if i = i' ∧ j = j' then (if k = k' ∧ l = l' then a*b else 0) else 0)
+      := by
+    split_ifs
+    all_goals simp
+  have eliminate  {a b: R} (i' j' k' l' : Fin 3) (hor : i' = l' ∨ j' = k'):
+      (if i = i' ∧ j = j' then (if k = k' ∧ l = l' then a*b else 0) else 0) = 0
+      := by
+    split_ifs <;> rcases hor with il | jk
+    any_goals simp
+    all_goals
+      rename_i h h'
+      exfalso
+    rw [il] at h
+    exact h1 (h.left.trans h'.right.symm)
+    rw [jk] at h
+    exact h2 (h.right.trans h'.left.symm)
+  have eliminate.il  {a b: R} (i' j' k' l' : Fin 3) (hil : i' = l'):
+      (if i = i' ∧ j = j' then (if k = k' ∧ l = l' then a*b else 0) else 0) = 0
+    := eliminate i' j' k' l' (by left; exact hil)
+  have eliminate.jk  {a b: R} (i' j' k' l' : Fin 3) (hjk : j' = k'):
+      (if i = i' ∧ j = j' then (if k = k' ∧ l = l' then a*b else 0) else 0) = 0
+    := eliminate i' j' k' l' (by right; exact hjk)
+  -- Now we only have to normalize order and eliminate every case
+  fin_cases x <;>
+  fin_cases y <;>
+    try simp [
+      unequal_pair hA 0, unequal_pair hA 1, unequal_pair hA 2,
+      unequal_pair hB 0, unequal_pair hB 1, unequal_pair hB 2,
+      abba, zero_mul,
+      reorder 0 1 1 0, reorder 0 1 1 2, reorder 0 2 2 0, reorder 0 2 2 1,
+      reorder 1 0 0 1, reorder 1 0 0 2, reorder 1 2 2 0, reorder 1 2 2 1,
+      reorder 2 0 0 1, reorder 2 0 0 2, reorder 2 1 1 0, reorder 2 1 1 2,
+      eliminate.jk 0 1 1 0 rfl, eliminate.jk 0 1 1 2 rfl, eliminate.jk 0 2 2 0 rfl, eliminate.jk 0 2 2 1 rfl,
+      eliminate.jk 1 0 0 1 rfl, eliminate.jk 1 0 0 2 rfl, eliminate.jk 1 2 2 0 rfl, eliminate.jk 1 2 2 1 rfl,
+      eliminate.jk 2 0 0 1 rfl, eliminate.jk 2 0 0 2 rfl, eliminate.jk 2 1 1 0 rfl, eliminate.jk 2 1 1 2 rfl,
+      eliminate.il 0 1 2 0 rfl, eliminate.il 0 2 1 0 rfl, eliminate.il 1 0 2 1 rfl, eliminate.il 1 2 0 1 rfl,
+      eliminate.il 2 0 1 2 rfl, eliminate.il 2 1 0 2 rfl
+    ]
+  --
+  all_goals split_ifs <;> rename_i hkl hij
+  any_goals simp [one_apply, add_comm]
+  --
+
+theorem transv_comm_transv
+    {R : Type*} [CommRing R]
+    (i j k l : Fin 3) (a b : R)
+    (H : i ≠ j ∧  k ≠ l ∧  i ≠ l ∧ j ≠ k) :
+    transvection i j a * transvection k l b =
+    transvection k l b * transvection i j a := by
+  rcases H with ⟨A, B, P, Q⟩
+  exact transv_comm_transv' i j k l a b A B P Q
+
+
+theorem deep_comm {R : Type*} [CommRing R]
+    {ε : Bool} {g : GL3 R} {φ : AutSL3 R} : ∀ a b : SL3 R,
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ (a * b))) =
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ a)) *
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ b)) := fun a b => by
+  simp [map_mul]
+
+theorem entries_gen {R : Type*} [CommRing R]
+    {A B : SL3 R} (h : A = B) :
+    ∀ i j : Fin 3, A i j = B i j :=
+  have hval : A.val = B.val := by
+    exact congr_arg Subtype.val h
+  fun i j => congr_fun (congr_fun hval i) j
+
+theorem _cong_comm_mat_helper
+    {R : Type*} [CommRing R] [IsDomain R] {Y Z : SL3 R}
+    (Y_comm_x12SL : Y * x12SL R = x12SL R * Y)
+    (Y_comm_x13SL : Y * x13SL R = x13SL R * Y)
+    (Y_comm_x32SL': Y * x32SL' R = x32SL' R * Y)
+    (Z_as_cong : Z = (w2SL R)⁻¹ * Y * (w2SL R))
+    (Z_as_comm : Z = (x23SL R)⁻¹ * Y * (x23SL R) * Y⁻¹)
+    : ∃ (t : R),
+      Y.val = !![1, t, 0; 0, 1, 0; 0, 0, 1] ∧
+      Z.val = !![1, 0, t; 0, 1, 0; 0, 0, 1]
+    := by
+  have by_comm_with_E01 : Y 1 0 = 0 ∧ Y 2 0 = 0 ∧ Y 1 2 = 0 ∧ Y 1 1 = Y 0 0
+      := by
+    have entries := entries_gen Y_comm_x12SL
+    have h00 := entries 0 0; have h01 := entries 0 1; have h02 := entries 0 2
+    have h10 := entries 1 0; have h11 := entries 1 1; have h12 := entries 1 2
+    have h20 := entries 2 0; have h21 := entries 2 1; have h22 := entries 2 2
+    simp [x12SL, x12, Matrix.mul_apply, Fin.sum_univ_three] at *
+    rw [add_comm] at h01
+    have eq := add_left_cancel h01
+    exact ⟨h11, h21, h02, eq.symm⟩
+  have by_comm_with_E02 : Y 2 1 = 0 ∧ Y 2 2 = Y 0 0
+      := by
+    have entries := entries_gen Y_comm_x13SL
+    have h00 := entries 0 0; have h01 := entries 0 1; have h02 := entries 0 2
+    have h10 := entries 1 0; have h11 := entries 1 1; have h12 := entries 1 2
+    have h20 := entries 2 0; have h21 := entries 2 1; have h22 := entries 2 2
+    simp [x13SL, x13, Matrix.mul_apply, Fin.sum_univ_three] at *
+    rw [add_comm] at h02
+    have eq := add_left_cancel h02
+    exact ⟨h01, eq.symm⟩
+  have by_comm_with_E21 : Y 0 2 = 0
+      := by
+    have entries := entries_gen Y_comm_x32SL'
+    have h00 := entries 0 0; have h01 := entries 0 1; have h02 := entries 0 2
+    have h10 := entries 1 0; have h11 := entries 1 1; have h12 := entries 1 2
+    have h20 := entries 2 0; have h21 := entries 2 1; have h22 := entries 2 2
+    simp [x32SL', x32', Matrix.mul_apply, Fin.sum_univ_three] at *
+    exact h01
+  have h_w2_inv : (w2SL R)⁻¹ = w2SL R * d1SL R := by
+    have h_mul : w2SL R * (w2SL R * d1SL R) = 1 := by
+      have h_mat : w2 R * (w2 R * d1 R) = 1 := by
+        rw [w2, d1, diagonal_fin_three, one_fin_three, mul_fin_three, mul_fin_three]
+        simp
+      apply Subtype.ext h_mat
+    rw [mul_eq_one_iff_inv_eq', inv_eq_iff_eq_inv] at h_mul
+    exact h_mul.symm
+  have hY : Y.val = !![Y 0 0, Y 0 1, 0; 0, Y 0 0, 0; 0, 0, Y 0 0] := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [by_comm_with_E01, by_comm_with_E02, by_comm_with_E21]
+  have hZ : Z.val = !![Y 0 0, 0, Y 0 1; 0, Y 0 0, 0; 0, 0, Y 0 0] := by
+    rw [h_w2_inv] at Z_as_cong
+    have entries := entries_gen Z_as_cong
+    have h00 := entries 0 0; have h01 := entries 0 1; have h02 := entries 0 2
+    have h10 := entries 1 0; have h11 := entries 1 1; have h12 := entries 1 2
+    have h20 := entries 2 0; have h21 := entries 2 1; have h22 := entries 2 2
+    simp [w2SL, d1SL, w2, d1, diagonal, vecHead, vecTail, vecMul, dotProduct,
+          by_comm_with_E01, by_comm_with_E02, by_comm_with_E21,
+          Matrix.mul_apply, Fin.sum_univ_three] at *
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [h00, h01, h02, h10, h11, h11, h12, h20, h21, h22]
+  have two_sides := Z_as_cong.symm.trans Z_as_comm
+  have diagonal_is_one : Y 0 0 = 1 := by
+    have : x23SL R * Z * Y = Y * x23SL R := by
+      rw [Z_as_comm]
+      group
+    have eq := congrArg Subtype.val this
+    simp [x23SL, x23] at eq
+    rw [hY, hZ] at eq
+    simp at eq
+    have hmul : Y 0 0 * (Y 0 0 - 1) = 0 := by
+      have := eq.right
+      ring_nf at this
+      ring_nf
+      simp [this]
+    rcases mul_eq_zero.mp hmul with h | h
+    exfalso
+    have hdet := Y.2
+    rw [hY] at hdet
+    simp [Matrix.det_fin_three, h] at hdet
+    exact sub_eq_zero.mp h
+  rw [diagonal_is_one] at hY
+  rw [diagonal_is_one] at hZ
+  use Y 0 1
+
+
+theorem transvection_12_preserved (φ : AutSL3 F) :
+    ∃ (g : GL3 F) (ε : Bool),
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x13SL F))) = x13SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x23SL F))) = x23SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x32SL' F))) = x32SL' F ∧
+    ∀ (u : F), ∃ (u' : F),
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g)
+      (φ (TransvectionSL3 0 1 u (by simp)))) = (TransvectionSL3 0 1 u' (by simp))
+    := by
+  rcases all_xij1_preserved F φ with ⟨g, ε, ⟨hd1, hd2, hd3, hw1, hw2, hx12, hx13, hx23, hx32'⟩⟩
+  use g, ε
+  simp [*]
+  intro u
+  set Y := (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ (TransvectionSL3 0 1 u (by simp)))) with Y.def
+  set Z := (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ (TransvectionSL3 0 2 u (by simp)))) with Z.def
+  have Z_as_cong : Z = (w2SL F)⁻¹ * Y * (w2SL F) := by
+    have pre_eq : (TransvectionSL3 0 2 u (by simp)) =
+        (w2SL F)⁻¹ * (TransvectionSL3 0 1 u (by simp)) * (w2SL F) := by
+      apply Subtype.ext
+      simp [w2SL, w2, TransvectionSL3, transvection, single, mul_add, vecHead, vecTail]
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp
+    simp only [Z, Y, pre_eq, deep_comm, map_inv, hw2]
+  have Z_as_comm: Z = (x23SL F)⁻¹ * Y * (x23SL F) * Y⁻¹ := by
+    have pre_eq : (TransvectionSL3 0 2 u (by simp)) =
+        (x23SL F)⁻¹ * (TransvectionSL3 0 1 u (by simp)) * (x23SL F) * (TransvectionSL3 0 1 u (by simp))⁻¹
+        := by
+      simp only [x23SL.eq_TransvectionSL3, TransvectionSL3_inv]
+      apply Subtype.ext
+      simp [TransvectionSL3, transvection, single, mul_add]
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp [of_apply, add_apply, mul_apply, Fin.sum_univ_three]
+    have := congr_arg (fun M => (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ M)) ) pre_eq
+    simp at this
+    rw [hx23] at this
+    simp only [Z, Y]
+    exact this
+  have Y_comm_x12SL : Y * x12SL F = x12SL F * Y := by
+    have pre_comm :
+        (TransvectionSL3 0 1 u (by simp)) * x12SL F =
+        x12SL F * (TransvectionSL3 0 1 u (by simp)) := by
+      apply Subtype.ext
+      simp [x12SL.eq_TransvectionSL3, TransvectionSL3]
+      exact transv_comm_transv 0 1 0 1 u 1 (by simp)
+    rw [<-hx12]
+    simp [Y]
+    rw [<-deep_comm, <-deep_comm, pre_comm]
+  have Y_comm_x13SL : Y * x13SL F = x13SL F * Y := by
+    have pre_comm :
+        (TransvectionSL3 0 1 u (by simp)) * x13SL F =
+        x13SL F * (TransvectionSL3 0 1 u (by simp)) := by
+      apply Subtype.ext
+      simp [x13SL.eq_TransvectionSL3, TransvectionSL3]
+      exact transv_comm_transv 0 1 0 2 u 1 (by simp)
+    rw [<-hx13]
+    simp [Y]
+    rw [<-deep_comm, <-deep_comm, pre_comm]
+  have Y_comm_x32SL' : Y * (x32SL' F) = (x32SL' F) * Y := by
+    have pre_comm :
+        (TransvectionSL3 0 1 u (by simp)) * x32SL' F =
+        x32SL' F * (TransvectionSL3 0 1 u (by simp)) := by
+      apply Subtype.ext
+      simp [x32SL'.eq_TransvectionSL3, TransvectionSL3]
+      exact transv_comm_transv 0 1 2 1 u (-1) (by simp)
+    rw [<-hx32']
+    simp [Y]
+    rw [<-deep_comm, <-deep_comm, pre_comm]
+  rcases _cong_comm_mat_helper
+      Y_comm_x12SL
+      Y_comm_x13SL
+      Y_comm_x32SL'
+      Z_as_cong
+      Z_as_comm
+    with ⟨t, hY, hZ⟩
+  use t
+  apply Subtype.ext
+  simp [TransvectionSL3, transvection, single]
+  ext i j
+  fin_cases i <;> fin_cases j <;> rw [hY] <;> simp
+
+
+theorem transvection_12_preserved_unique_and_on (φ : AutSL3 F) :
+    ∃ (g : GL3 F) (ε : Bool),
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x13SL F))) = x13SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x23SL F))) = x23SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x32SL' F))) = x32SL' F ∧
+    (∀ (u : F), ∃! (u' : F),
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g)
+      (φ (TransvectionSL3 0 1 u (by simp)))) = (TransvectionSL3 0 1 u' (by simp)))
+    ∧ (∀ (u' : F), ∃! (u : F),
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g)
+      (φ (TransvectionSL3 0 1 u (by simp)))) = (TransvectionSL3 0 1 u' (by simp)))
+    := by
+  rcases transvection_12_preserved F φ with
+      ⟨g, ε, hd1, hd2, hd3, hw1, hw2, hx12, hx13, hx23, hx32', find⟩
+  use g, ε
+  simp [*]
+  constructor
+  -- u -> u'
+  intro u
+  rcases find u with ⟨u', hu'⟩
+  use u'
+  simp [hu']
+  intro v' h
+  have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 1) h
+  simp [TransvectionSL3, transvection] at this
+  exact this.symm
+  -- u' -> u
+  intro b
+  have hbij : Function.Bijective (fun E =>
+      (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ E))) := by
+    apply Function.Bijective.comp
+    exact (graphChoiceSL3 ε).bijective
+    apply Function.Bijective.comp
+    exact (innerAutSL3byGL3 g).bijective
+    exact φ.bijective
+  rcases hbij.surjective (TransvectionSL3 0 1 b (by simp)) with ⟨Y, hY⟩
+  rcases hbij.surjective (TransvectionSL3 0 2 b (by simp)) with ⟨Z, hZ⟩
+  simp at hY
+  simp at hZ
+  have Z_as_cong : Z = (w2SL F)⁻¹ * Y * (w2SL F) := by
+    have pre_eq : (TransvectionSL3 0 2 b (by simp)) =
+      (w2SL F)⁻¹ * (TransvectionSL3 0 1 b (by simp)) * (w2SL F) := by
+      apply Subtype.ext
+      simp [w2SL, w2, TransvectionSL3, transvection, single, mul_add, vecHead, vecTail]
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp
+    rw [<-hY, <-hZ, <-hw2,
+        <-map_inv, <-map_inv, <-map_inv,
+        <-deep_comm, <-deep_comm] at pre_eq
+    exact hbij.injective pre_eq
+  have Z_as_comm: Z = (x23SL F)⁻¹ * Y * (x23SL F) * Y⁻¹ := by
+    have pre_eq : (TransvectionSL3 0 2 b (by simp)) =
+        (x23SL F)⁻¹ * (TransvectionSL3 0 1 b (by simp)) * (x23SL F) * (TransvectionSL3 0 1 b (by simp))⁻¹
+        := by
+      simp only [x23SL.eq_TransvectionSL3, TransvectionSL3_inv]
+      apply Subtype.ext
+      simp [TransvectionSL3, transvection, single, mul_add]
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp [of_apply, add_apply, mul_apply, Fin.sum_univ_three]
+    rw [<-hY, <-hZ, <-hx23,
+        <-map_inv, <-map_inv, <-map_inv, <-map_inv, <-map_inv, <-map_inv,
+        <-deep_comm, <-deep_comm, <-deep_comm] at pre_eq
+    exact hbij.injective pre_eq
+  have Y_comm_x12SL : Y * x12SL F = x12SL F * Y := by
+    have pre_comm :
+        (TransvectionSL3 0 1 b (by simp)) * x12SL F =
+        x12SL F * (TransvectionSL3 0 1 b (by simp)) := by
+      apply Subtype.ext
+      simp [x12SL.eq_TransvectionSL3, TransvectionSL3]
+      exact transv_comm_transv 0 1 0 1 b 1 (by simp)
+    rw [<-hY, <-hx12, <-deep_comm, <-deep_comm] at pre_comm
+    exact hbij.injective pre_comm
+  have Y_comm_x13SL : Y * x13SL F = x13SL F * Y := by
+    have pre_comm :
+        (TransvectionSL3 0 1 b (by simp)) * x13SL F =
+        x13SL F * (TransvectionSL3 0 1 b (by simp)) := by
+      apply Subtype.ext
+      simp [x13SL.eq_TransvectionSL3, TransvectionSL3]
+      exact transv_comm_transv 0 1 0 2 b 1 (by simp)
+    rw [<-hY, <-hx13, <-deep_comm, <-deep_comm] at pre_comm
+    exact hbij.injective pre_comm
+  have Y_comm_x32SL' : Y * (x32SL' F) = (x32SL' F) * Y := by
+    have pre_comm :
+        (TransvectionSL3 0 1 b (by simp)) * x32SL' F =
+        x32SL' F * (TransvectionSL3 0 1 b (by simp)) := by
+      apply Subtype.ext
+      simp [x32SL'.eq_TransvectionSL3, TransvectionSL3]
+      exact transv_comm_transv 0 1 2 1 b (-1) (by simp)
+    rw [<-hY, <-hx32', <-deep_comm, <-deep_comm] at pre_comm
+    exact hbij.injective pre_comm
+  rcases _cong_comm_mat_helper
+      Y_comm_x12SL
+      Y_comm_x13SL
+      Y_comm_x32SL'
+      Z_as_cong
+      Z_as_comm
+    with ⟨t, Ymat, Zmat⟩
+  use t
+  simp
+  have Y_as_transv : Y = TransvectionSL3 0 1 t (by simp) := by
+    apply Subtype.ext
+    simp [TransvectionSL3, transvection, single]
+    ext i j
+    fin_cases i <;> fin_cases j <;> rw [Ymat] <;> simp
+  constructor
+  rw [<-Y_as_transv]
+  exact hY
+  -- UNIQNESS
+  intro y' hy'
+  have : TransvectionSL3 0 1 y' (by simp) = Y :=
+    hbij.injective (hy'.trans hY.symm)
+  have := entries_gen this 0 1
+  simp [TransvectionSL3, transvection, single, of_apply, Ymat] at this
+  exact this
+
+
+-- Due to large amount  of exact cases
+set_option maxHeartbeats 250000 in
+theorem transvections_preserved_unique (φ : AutSL3 F) :
+    ∃ (g : GL3 F) (ε : Bool),
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x13SL F))) = x13SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x23SL F))) = x23SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x32SL' F))) = x32SL' F ∧
+    ∃ (f : F → F), Function.Bijective f ∧ ∀ (i j : Fin 3) (u : F) (h : i ≠ j),
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g)
+      (φ (TransvectionSL3 i j u h))) = (TransvectionSL3 i j (f u) h)
+    := by
+  rcases transvection_12_preserved_unique_and_on F φ with
+      ⟨g, ε, hd1, hd2, hd3, hw1, hw2, hx12, hx13, hx23, hx32', find, find'⟩
+  use g, ε
+  simp [*]
+  set f := fun u => (find u).choose with f.def
+  have hf : ∀ u, (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ (TransvectionSL3 0 1 u (by simp)))) =
+      TransvectionSL3 0 1 (f u) (by simp) := by
+    intro u
+    -- Idk how it works
+    exact (find u).choose_spec.1
+  use f
+  constructor
+  -- Bijectivety
+  apply (Function.bijective_iff_existsUnique f).mpr
+  intro b
+  rcases find' b with ⟨a, hA, uniqA⟩
+  use a
+  simp
+  constructor
+  have := entries_gen (hA.symm.trans (hf a)) 0 1
+  simp [TransvectionSL3, transvection, single, of_apply] at this
+  exact this.symm
+  intro y hy
+  have hY := hf y
+  rw [hy] at hY
+  have := uniqA y
+  simp at this
+  exact this hY
+  -- Preserves transvections
+  intro i j u neq
+  have hu := hf u
+  fin_cases i <;> fin_cases j <;> simp at neq <;> simp
+  -- Case 0 1
+  · exact hu
+  -- Case 0 2
+  · have conj : ∀ (c : F), TransvectionSL3 0 2 c (by simp)
+        = (w2SL F)⁻¹ * (TransvectionSL3 0 1 c (by simp)) * (w2SL F)
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w2SL, w2]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+    simp [conj, hf, hw2]
+  -- Case 1 0
+  · have conj : ∀ (c : F), TransvectionSL3 1 0 c (by simp)
+        = (w1SL F)⁻¹ * (TransvectionSL3 0 1 (c) (by simp))⁻¹ * (w1SL F)
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w1SL, w1]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, adjugate_fin_three]
+    simp [conj, hf, hw1]
+  -- Case 1 2
+  · have conj : ∀ (c : F), TransvectionSL3 1 2 c (by simp)
+        = (w1SL F) * (w2SL F) * (TransvectionSL3 0 1 (c) (by simp)) * (w2SL F)⁻¹ * (w1SL F)⁻¹
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w1SL, w1, w2SL, w2]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+    simp [conj, hf, hw1, hw2]
+  -- Case 2 0
+  · have conj : ∀ (c : F), TransvectionSL3 2 0 c (by simp)
+        = (w2SL F) * (w1SL F) * (TransvectionSL3 0 1 (c) (by simp)) * (w1SL F)⁻¹ * (w2SL F)⁻¹
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w1SL, w1, w2SL, w2]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+    simp [conj, hf, hw1, hw2]
+  -- Case 2 1
+  · have conj : ∀ (c : F), TransvectionSL3 2 1 c (by simp)
+        = (w1SL F) * (w2SL F)⁻¹ * (w1SL F)
+          * (TransvectionSL3 0 1 (c) (by simp))
+          * (w1SL F)⁻¹ * (w2SL F) * (w1SL F)⁻¹
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w1SL, w1, w2SL, w2]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+    simp [conj, hf, hw1, hw2]
+
+
+theorem transv_to_transv_same_coeff_F (φ : AutSL3 (F)) :
+    ∃ (g : GL3 F) (ε : Bool) (σ: F ≃+* F), ∀ (E : SL3 F), (IsTransvectionSL3 E)
+    → (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ E)) = E.map σ := by
+  rcases transvections_preserved_unique F φ with
+      ⟨g, ε, hd1, hd2, hd3, hw1, hw2, hx12, hx13, hx23, hx32', f, hbij, hf⟩
+  use g, ε
+  have one_as_transvection01 : (1:SL3 F) = TransvectionSL3 0 1 0 (by simp) := by
+    apply Subtype.ext
+    simp [TransvectionSL3]
+  have zero_preserved : f 0 = 0 := by
+    have h := hf 0 1 0 (by simp)
+    simp [<-one_as_transvection01] at h
+    have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 1) h.symm
+    simp [TransvectionSL3, transvection] at this
+    exact this
+  have one_preserved : f 1 = 1 := by
+    have h := hf 0 1 1 (by simp)
+    rw [<-x12SL.eq_TransvectionSL3, hx12] at h
+    have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 1) h.symm
+    simp [TransvectionSL3, transvection, x12SL, x12] at this
+    exact this
+  have add_preserved : ∀ a b, f (a+b) = f a + f b := by
+    intro a b
+    have hab := hf 0 1 (a+b) (by simp)
+    have ha := hf 0 1 a (by simp)
+    have hb := hf 0 1 b (by simp)
+    rw [TransvectionSL3_mul_TransvectionSL3_same, deep_comm] at hab
+    simp [ha, hb] at hab
+    rw [<-TransvectionSL3_mul_TransvectionSL3_same] at hab
+    have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 1) hab.symm
+    simp [TransvectionSL3, transvection] at this
+    exact this
+  have mul_preserved : ∀ a b, f (a*b) = f a * f b := by
+    intro a b
+    have ha := hf 0 1 a (by simp)
+    have hb := hf 1 2 b (by simp)
+    have hab := hf 0 2 (a*b) (by simp)
+    have commutator (x y : F) : TransvectionSL3 0 2 (x*y) (by simp) =
+        (TransvectionSL3 0 1 x (by simp)) * (TransvectionSL3 1 2 y (by simp))
+        * (TransvectionSL3 0 1 x (by simp))⁻¹ * (TransvectionSL3 1 2 y (by simp))⁻¹
+        := by
+      simp [TransvectionSL3_inv]
+      simp [TransvectionSL3, transvection]
+      ext i j
+      fin_cases i <;> fin_cases j
+        <;> simp [mul_apply, Fin.sum_univ_three, one_apply]
+    simp [commutator a b, ha, hb] at hab
+    rw [<-commutator (f a) (f b)] at hab
+    have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 2) hab.symm
+    simp [TransvectionSL3, transvection] at this
+    exact this
+  set fHom : F →+* F := {
+      toFun    := f
+      map_zero' := zero_preserved
+      map_one'  := one_preserved
+      map_add'  := add_preserved
+      map_mul'  := mul_preserved
+    } with fHom.def
+  set fIso : F ≃+* F := RingEquiv.ofBijective fHom hbij with fIso.def
+  have hfIso : ∀ c, fIso c = f c := by
+    intro c
+    simp [fIso.def, fHom.def]
+  use fIso
+  intro E hE
+  rcases hE with ⟨i, j, c, inej, hE⟩
+  rw [hE, hf i j c inej]
+  simp [TransvectionSL3, transvection, single, SpecialLinearGroup.map]
+  fin_cases i <;> fin_cases j
+    <;> simp at inej
+    <;> simp at hE
+    <;> simp
+    <;> ext i j
+    <;> fin_cases i
+      <;> fin_cases j
+      <;> simp [hfIso, one_preserved, zero_preserved]
+
+
+theorem field_class (φ : AutSL3 F) :
     ∃ (σ : F ≃+* F) (ε : Bool) (g : GL (Fin 3) F),
       ∀ (x : SL3 F),
-        φ x =
-            ringAutSL3 F σ ((graphChoiceSL3 F ε) (innerAutSL3byGL3 F g x))
-             := by
-  sorry
+        φ x = (innerAutSL3byGL3 g) ((graphChoiceSL3 ε) (x.map σ))
+    := by
+  rcases transv_to_transv_same_coeff_F F φ with ⟨g, ε, σ, trans2trans⟩
+  use σ, ε, g⁻¹
+  intro M
+  have hM : M ∈ (⊤ : Subgroup (SL3 F)) := Subgroup.mem_top M
+  rw [<-SL3_generated_by_transvections] at hM
+  have inner_inverse : (innerAutSL3byGL3 g)⁻¹ = (innerAutSL3byGL3 g⁻¹) := by
+    ext A i j
+    simp [innerAutSL3byGL3]
+  have graph_involution : (graphChoiceSL3 ε)⁻¹ = graphChoiceSL3 (R:=F) ε := by
+    ext A i j
+    cases ε <;> simp [graphChoiceSL3, invTransposeAutSL3]
+  refine Subgroup.closure_induction ?_ ?_ ?_ ?_ hM
+  · intro A hA
+    simp [TransvectionSetSL3, IsTransvectionSL3] at hA
+    rcases (by exact hA) with ⟨i, j, c, neq, asTransvection⟩
+    have mapped := trans2trans A hA
+    apply (innerAutSL3byGL3 g).injective
+    simp [<-inner_inverse]
+    apply (graphChoiceSL3 ε).injective
+    nth_rw 2 [<-graph_involution]
+    simp
+    exact mapped
+  · simp
+  · intro A B hA hB mapA mapB
+    simp [mapA, mapB]
+  · intro A hA mapA
+    simp [map_inv, mapA]
 
-end FieldAutomorpisms
+
+end FieldAutomorphisms

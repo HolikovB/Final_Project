@@ -10,6 +10,7 @@ set_option warningAsError false
 
 open Matrix BigOperators
 open scoped MatrixGroups
+open FieldAutomorphisms
 
 noncomputable section
 
@@ -18,7 +19,7 @@ Part 4 of the project.
 
 This file uses the definitions from `field_aut.lean`.  In particular it uses
 `AutSL3`, `GL3`, `ringAutSL3`, `innerAutSL3byGL3`, `invTransposeAutSL3`,
-and the named matrices in the namespace `FieldAutomorpisms`.
+and the named matrices in the namespace `FieldAutomorphisms`.
 
 Mathematical content: after the residue-field normalization, an automorphism of
 `SL₃(R)` which is congruent to the identity on the six standard generators
@@ -60,32 +61,32 @@ def SL3FixedModJ (φ : AutSL3 R) (A : SL3 R) : Prop :=
 
 /-- The three diagonal involutions are fixed modulo the maximal ideal. -/
 def DiagonalFixedModJ (φ : AutSL3 R) : Prop :=
-  SL3FixedModJ R φ (FieldAutomorpisms.d1SL R) ∧
-  SL3FixedModJ R φ (FieldAutomorpisms.d2SL R) ∧
-  SL3FixedModJ R φ (FieldAutomorpisms.d3SL R)
+  SL3FixedModJ R φ (d1SL R) ∧
+  SL3FixedModJ R φ (d2SL R) ∧
+  SL3FixedModJ R φ (d3SL R)
 
 /-- The two signed transposition matrices are fixed modulo the maximal ideal. -/
 def SignedTranspositionsFixedModJ (φ : AutSL3 R) : Prop :=
-  SL3FixedModJ R φ (FieldAutomorpisms.w1SL R) ∧
-  SL3FixedModJ R φ (FieldAutomorpisms.w2SL R)
+  SL3FixedModJ R φ (w1SL R) ∧
+  SL3FixedModJ R φ (w2SL R)
 
 /-- The six normalized generators are fixed modulo the maximal ideal. -/
 def BasicGeneratorsFixedModJ (φ : AutSL3 R) : Prop :=
-  SL3FixedModJ R φ (FieldAutomorpisms.d1SL R) ∧
-  SL3FixedModJ R φ (FieldAutomorpisms.d2SL R) ∧
-  SL3FixedModJ R φ (FieldAutomorpisms.d3SL R) ∧
-  SL3FixedModJ R φ (FieldAutomorpisms.w1SL R) ∧
-  SL3FixedModJ R φ (FieldAutomorpisms.w2SL R) ∧
-  SL3FixedModJ R φ (FieldAutomorpisms.x12SL R)
+  SL3FixedModJ R φ (d1SL R) ∧
+  SL3FixedModJ R φ (d2SL R) ∧
+  SL3FixedModJ R φ (d3SL R) ∧
+  SL3FixedModJ R φ (w1SL R) ∧
+  SL3FixedModJ R φ (w2SL R) ∧
+  SL3FixedModJ R φ (x12SL R)
 
 /-- Exact fixation of the six normalized generators. -/
 def BasicGeneratorsFixed (φ : AutSL3 R) : Prop :=
-  φ (FieldAutomorpisms.d1SL R) = FieldAutomorpisms.d1SL R ∧
-  φ (FieldAutomorpisms.d2SL R) = FieldAutomorpisms.d2SL R ∧
-  φ (FieldAutomorpisms.d3SL R) = FieldAutomorpisms.d3SL R ∧
-  φ (FieldAutomorpisms.w1SL R) = FieldAutomorpisms.w1SL R ∧
-  φ (FieldAutomorpisms.w2SL R) = FieldAutomorpisms.w2SL R ∧
-  φ (FieldAutomorpisms.x12SL R) = FieldAutomorpisms.x12SL R
+  φ (d1SL R) = d1SL R ∧
+  φ (d2SL R) = d2SL R ∧
+  φ (d3SL R) = d3SL R ∧
+  φ (w1SL R) = w1SL R ∧
+  φ (w2SL R) = w2SL R ∧
+  φ (x12SL R) = x12SL R
 
 /-- The elementary transvection `xᵢⱼ(a)` as an element of `SL₃(R)`. -/
 def xijSL (i j : Fin 3) (hij : i ≠ j) (a : R) : SL3 R :=
@@ -121,27 +122,27 @@ theorem diagonal_preserved_after_local_change_of_basis
     (φ : AutSL3 R) (hdiag : DiagonalFixedModJ R φ) :
     ∃ g₁ : GL3 R,
       GL3IsOneModJ R g₁ ∧
-      innerAutSL3byGL3 R g₁ (φ (FieldAutomorpisms.d1SL R)) = FieldAutomorpisms.d1SL R ∧
-      innerAutSL3byGL3 R g₁ (φ (FieldAutomorpisms.d2SL R)) = FieldAutomorpisms.d2SL R ∧
-      innerAutSL3byGL3 R g₁ (φ (FieldAutomorpisms.d3SL R)) = FieldAutomorpisms.d3SL R := by
-  let τ1 : Matrix (Fin 3) (Fin 3) R := φ (FieldAutomorpisms.d1SL R)
-  let τ2 : Matrix (Fin 3) (Fin 3) R := φ (FieldAutomorpisms.d2SL R)
-  let τ3 : Matrix (Fin 3) (Fin 3) R := φ (FieldAutomorpisms.d3SL R)
-  let d1m : Matrix (Fin 3) (Fin 3) R := FieldAutomorpisms.d1SL R
-  let d2m : Matrix (Fin 3) (Fin 3) R := FieldAutomorpisms.d2SL R
-  let d3m : Matrix (Fin 3) (Fin 3) R := FieldAutomorpisms.d3SL R
+      innerAutSL3byGL3 g₁ (φ (d1SL R)) = d1SL R ∧
+      innerAutSL3byGL3 g₁ (φ (d2SL R)) = d2SL R ∧
+      innerAutSL3byGL3 g₁ (φ (d3SL R)) = d3SL R := by
+  let τ1 : Matrix (Fin 3) (Fin 3) R := φ (d1SL R)
+  let τ2 : Matrix (Fin 3) (Fin 3) R := φ (d2SL R)
+  let τ3 : Matrix (Fin 3) (Fin 3) R := φ (d3SL R)
+  let d1m : Matrix (Fin 3) (Fin 3) R := d1SL R
+  let d2m : Matrix (Fin 3) (Fin 3) R := d2SL R
+  let d3m : Matrix (Fin 3) (Fin 3) R := d3SL R
   let two_inv : R := ⅟2
   -- Construct the first transition matrix U directly
   let U : Matrix (Fin 3) (Fin 3) R := two_inv • (1 + τ1 * d1m)
   -- Prove τ1 is an involution (τ1 * τ1 = 1) because φ is a group homomorphism
   have ht1_sq : τ1 * τ1 = 1 := by
-    have h_mul : τ1 * τ1 = ↑(φ (FieldAutomorpisms.d1SL R) * φ (FieldAutomorpisms.d1SL R)) := rfl
+    have h_mul : τ1 * τ1 = ↑(φ (d1SL R) * φ (d1SL R)) := rfl
     rw [h_mul]
     rw [← map_mul]
-    have hd1 : FieldAutomorpisms.d1SL R * FieldAutomorpisms.d1SL R = 1 := by
+    have hd1 : d1SL R * d1SL R = 1 := by
       apply Subtype.ext
-      change FieldAutomorpisms.d1 R * FieldAutomorpisms.d1 R = 1
-      dsimp [FieldAutomorpisms.d1]
+      change d1 R * d1 R = 1
+      dsimp [d1]
       rw [Matrix.diagonal_mul_diagonal]
       ext i j
       by_cases h : i = j
@@ -154,8 +155,8 @@ theorem diagonal_preserved_after_local_change_of_basis
     rfl
   have hd1_sq : d1m * d1m = 1 := by
     dsimp [d1m]
-    change FieldAutomorpisms.d1 R * FieldAutomorpisms.d1 R = 1
-    dsimp[FieldAutomorpisms.d1]
+    change d1 R * d1 R = 1
+    dsimp[d1]
     rw[Matrix.diagonal_mul_diagonal]
     ext i j
     by_cases h : i = j
@@ -240,12 +241,12 @@ theorem diagonal_preserved_after_local_change_of_basis
   -- Define V analogously to U
   let V : Matrix (Fin 3) (Fin 3) R := two_inv • (1 + τ2_prime * d2m)
   have ht2_sq : τ2 * τ2 = 1 := by
-      have h_mul : τ2 * τ2 = ↑(φ (FieldAutomorpisms.d2SL R) * φ (FieldAutomorpisms.d2SL R)) := rfl
+      have h_mul : τ2 * τ2 = ↑(φ (d2SL R) * φ (d2SL R)) := rfl
       rw [h_mul, ← map_mul]
-      have hd2 : FieldAutomorpisms.d2SL R * FieldAutomorpisms.d2SL R = 1 := by
+      have hd2 : d2SL R * d2SL R = 1 := by
         apply Subtype.ext
-        change FieldAutomorpisms.d2 R * FieldAutomorpisms.d2 R = 1
-        dsimp [FieldAutomorpisms.d2]
+        change d2 R * d2 R = 1
+        dsimp [d2]
         rw [Matrix.diagonal_mul_diagonal]
         ext i j
         by_cases h : i = j
@@ -272,8 +273,8 @@ theorem diagonal_preserved_after_local_change_of_basis
   have hd2_sq : d2m * d2m = 1 := by
     -- same proof structure as hd1_sq
     dsimp [d2m]
-    change FieldAutomorpisms.d2 R * FieldAutomorpisms.d2 R = 1
-    dsimp[FieldAutomorpisms.d2]
+    change d2 R * d2 R = 1
+    dsimp[d2]
     rw[Matrix.diagonal_mul_diagonal]
     ext i j
     by_cases h : i = j
@@ -293,15 +294,15 @@ theorem diagonal_preserved_after_local_change_of_basis
     exact add_comm τ2_prime d2m
   have hd1_t2prime_comm : d1m * τ2_prime = τ2_prime * d1m := by
     have ht1_t2_comm : τ1 * τ2 = τ2 * τ1 := by
-      have h_mul1 : τ1 * τ2 = ↑(φ (FieldAutomorpisms.d1SL R) * φ (FieldAutomorpisms.d2SL R)) := rfl
-      have h_mul2 : τ2 * τ1 = ↑(φ (FieldAutomorpisms.d2SL R) * φ (FieldAutomorpisms.d1SL R)) := rfl
+      have h_mul1 : τ1 * τ2 = ↑(φ (d1SL R) * φ (d2SL R)) := rfl
+      have h_mul2 : τ2 * τ1 = ↑(φ (d2SL R) * φ (d1SL R)) := rfl
       rw [h_mul1, h_mul2, ← map_mul, ← map_mul]
-      have hd1d2 : FieldAutomorpisms.d1SL R * FieldAutomorpisms.d2SL R =
-                   FieldAutomorpisms.d2SL R * FieldAutomorpisms.d1SL R := by
+      have hd1d2 : d1SL R * d2SL R =
+                   d2SL R * d1SL R := by
         apply Subtype.ext
-        change FieldAutomorpisms.d1 R * FieldAutomorpisms.d2 R = FieldAutomorpisms.d2 R *
-        FieldAutomorpisms.d1 R
-        dsimp [FieldAutomorpisms.d1, FieldAutomorpisms.d2]
+        change d1 R * d2 R = d2 R *
+        d1 R
+        dsimp [d1, d2]
         rw [Matrix.diagonal_mul_diagonal, Matrix.diagonal_mul_diagonal]
         ext i j
         by_cases h : i = j
@@ -333,9 +334,9 @@ theorem diagonal_preserved_after_local_change_of_basis
   have hd1_V_comm : d1m * V = V * d1m := by
     have hd1d2_comm : d1m * d2m = d2m * d1m := by
       dsimp [d1m, d2m]
-      change FieldAutomorpisms.d1 R * FieldAutomorpisms.d2 R = FieldAutomorpisms.d2 R *
-      FieldAutomorpisms.d1 R
-      dsimp [FieldAutomorpisms.d1, FieldAutomorpisms.d2]
+      change d1 R * d2 R = d2 R *
+      d1 R
+      dsimp [d1, d2]
       rw [Matrix.diagonal_mul_diagonal, Matrix.diagonal_mul_diagonal]
       ext i j
       by_cases h : i = j
@@ -501,7 +502,7 @@ theorem diagonal_preserved_after_local_change_of_basis
     split_ifs
     · exact (map_one π).symm
     · exact (map_zero π).symm
-  have hd1_goal : innerAutSL3byGL3 R g1 (φ (FieldAutomorpisms.d1SL R)) = FieldAutomorpisms.d1SL R
+  have hd1_goal : innerAutSL3byGL3 g1 (φ (d1SL R)) = d1SL R
   := by
     apply Subtype.ext
     change (↑g1 : Matrix (Fin 3) (Fin 3) R) * τ1 * (↑(g1⁻¹) : Matrix (Fin 3) (Fin 3) R) = d1m
@@ -530,7 +531,7 @@ theorem diagonal_preserved_after_local_change_of_basis
       exact Units.inv_mul V_GL
     rw [hV_inv_val]
     rw [Matrix.one_mul]
-  have hd2_goal : innerAutSL3byGL3 R g1 (φ (FieldAutomorpisms.d2SL R)) = FieldAutomorpisms.d2SL R
+  have hd2_goal : innerAutSL3byGL3 g1 (φ (d2SL R)) = d2SL R
   := by
     apply Subtype.ext
     change (↑g1 : Matrix (Fin 3) (Fin 3) R) * τ2 * (↑(g1⁻¹) : Matrix (Fin 3) (Fin 3) R) = d2m
@@ -559,11 +560,11 @@ theorem diagonal_preserved_after_local_change_of_basis
   -- Final Witness & Goal Resolution
   use g1
   refine ⟨hg1_mod_J, hd1_goal, hd2_goal, ?_⟩
-  · have hd3_split : FieldAutomorpisms.d3SL R = FieldAutomorpisms.d1SL R * FieldAutomorpisms.d2SL R
+  · have hd3_split : d3SL R = d1SL R * d2SL R
      := by
       apply Subtype.ext
-      change FieldAutomorpisms.d3 R = FieldAutomorpisms.d1 R * FieldAutomorpisms.d2 R
-      dsimp [FieldAutomorpisms.d1, FieldAutomorpisms.d2, FieldAutomorpisms.d3]
+      change d3 R = d1 R * d2 R
+      dsimp [d1, d2, d3]
       rw [Matrix.diagonal_mul_diagonal]
       ext i j
       by_cases h : i = j
@@ -573,7 +574,7 @@ theorem diagonal_preserved_after_local_change_of_basis
       · simp [Matrix.diagonal_apply_ne _ h]
     rw [hd3_split]
     rw [map_mul φ]
-    rw [map_mul (innerAutSL3byGL3 R g1)]
+    rw [map_mul (innerAutSL3byGL3 g1)]
     rw [hd1_goal, hd2_goal]
 
 /-
@@ -584,26 +585,26 @@ to the identity fixes the signed transpositions exactly.
 theorem signed_transpositions_preserved_after_local_change_of_basis
     (φ : AutSL3 R)
     (hdiag_exact :
-      φ (FieldAutomorpisms.d1SL R) = FieldAutomorpisms.d1SL R ∧
-      φ (FieldAutomorpisms.d2SL R) = FieldAutomorpisms.d2SL R ∧
-      φ (FieldAutomorpisms.d3SL R) = FieldAutomorpisms.d3SL R)
+      φ (d1SL R) = d1SL R ∧
+      φ (d2SL R) = d2SL R ∧
+      φ (d3SL R) = d3SL R)
     (hw_mod : SignedTranspositionsFixedModJ R φ) :
     ∃ g₂ : GL3 R,
       GL3IsOneModJ R g₂ ∧
-      innerAutSL3byGL3 R g₂ (φ (FieldAutomorpisms.d1SL R)) = FieldAutomorpisms.d1SL R ∧
-      innerAutSL3byGL3 R g₂ (φ (FieldAutomorpisms.d2SL R)) = FieldAutomorpisms.d2SL R ∧
-      innerAutSL3byGL3 R g₂ (φ (FieldAutomorpisms.d3SL R)) = FieldAutomorpisms.d3SL R ∧
-      innerAutSL3byGL3 R g₂ (φ (FieldAutomorpisms.w1SL R)) = FieldAutomorpisms.w1SL R ∧
-      innerAutSL3byGL3 R g₂ (φ (FieldAutomorpisms.w2SL R)) = FieldAutomorpisms.w2SL R := by
-  let v1_mat : Matrix (Fin 3) (Fin 3) R := ↑(φ (FieldAutomorpisms.w1SL R))
-  let v2_mat : Matrix (Fin 3) (Fin 3) R := ↑(φ (FieldAutomorpisms.w2SL R))
+      innerAutSL3byGL3 g₂ (φ (d1SL R)) = d1SL R ∧
+      innerAutSL3byGL3 g₂ (φ (d2SL R)) = d2SL R ∧
+      innerAutSL3byGL3 g₂ (φ (d3SL R)) = d3SL R ∧
+      innerAutSL3byGL3 g₂ (φ (w1SL R)) = w1SL R ∧
+      innerAutSL3byGL3 g₂ (φ (w2SL R)) = w2SL R := by
+  let v1_mat : Matrix (Fin 3) (Fin 3) R := ↑(φ (w1SL R))
+  let v2_mat : Matrix (Fin 3) (Fin 3) R := ↑(φ (w2SL R))
   let π := IsLocalRing.residue R
   -- Extract λ = - v1_mat 0 1 and show it maps to 1 in the residue field.
   have h_map_lam : π (- v1_mat 0 1) = 1 := by
-    have hq : π (v1_mat 0 1) = π ((FieldAutomorpisms.w1 R) 0 1) :=
-      (Ideal.Quotient.eq (I := J R) (x := v1_mat 0 1) (y := (FieldAutomorpisms.w1 R) 0 1)).mpr
+    have hq : π (v1_mat 0 1) = π ((w1 R) 0 1) :=
+      (Ideal.Quotient.eq (I := J R) (x := v1_mat 0 1) (y := (w1 R) 0 1)).mpr
       (hw_mod.1 0 1)
-    have hw1_01 : (FieldAutomorpisms.w1 R) 0 1 = -1 := rfl
+    have hw1_01 : (w1 R) 0 1 = -1 := rfl
     rw [hw1_01] at hq
     rw [map_neg, hq, map_neg, map_one, neg_neg]
   have h_lam_unit_pi : IsUnit (π (- v1_mat 0 1)) := by
@@ -613,10 +614,10 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
   let lam_u : Rˣ := h_lam_unit.unit
   -- Extract μ = v2_mat 1 2 and show it maps to 1 in the residue field.
   have h_map_mu : π (v2_mat 1 2) = 1 := by
-    have hq : π (v2_mat 1 2) = π ((FieldAutomorpisms.w2 R) 1 2) :=
-      (Ideal.Quotient.eq (I := J R) (x := v2_mat 1 2) (y := (FieldAutomorpisms.w2 R) 1 2)).mpr 
+    have hq : π (v2_mat 1 2) = π ((w2 R) 1 2) :=
+      (Ideal.Quotient.eq (I := J R) (x := v2_mat 1 2) (y := (w2 R) 1 2)).mpr 
       (hw_mod.2 1 2)
-    have hw2_12 : (FieldAutomorpisms.w2 R) 1 2 = 1 := rfl
+    have hw2_12 : (w2 R) 1 2 = 1 := rfl
     rw [hw2_12] at hq
     rw [hq, map_one]
   have h_mu_unit_pi : IsUnit (π (v2_mat 1 2)) := by
@@ -666,11 +667,11 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
     · simp [Matrix.diagonal_apply_ne _ h, map_zero]
       exact h
   -- Prove fixing of d1
-  have hd1_goal : innerAutSL3byGL3 R g2 (φ (FieldAutomorpisms.d1SL R)) = FieldAutomorpisms.d1SL R 
+  have hd1_goal : innerAutSL3byGL3 g2 (φ (d1SL R)) = d1SL R 
   := by
     apply Subtype.ext
-    let d1m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.d1SL R)
-    let τ1 : Matrix (Fin 3) (Fin 3) R := ↑(φ (FieldAutomorpisms.d1SL R))
+    let d1m : Matrix (Fin 3) (Fin 3) R := ↑(d1SL R)
+    let τ1 : Matrix (Fin 3) (Fin 3) R := ↑(φ (d1SL R))
     change (↑g2 : Matrix (Fin 3) (Fin 3) R) * τ1 * (↑(g2⁻¹) : Matrix (Fin 3) (Fin 3) R) = d1m
     have h_phi_d1 : τ1 = d1m := congrArg Subtype.val hdiag_exact.1
     rw [h_phi_d1]
@@ -687,11 +688,11 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
       · simp [Matrix.diagonal_apply_ne _ h]
     rw [h_comm, Matrix.mul_assoc, Units.mul_inv g2, Matrix.mul_one]
   -- Prove fixing of d2
-  have hd2_goal : innerAutSL3byGL3 R g2 (φ (FieldAutomorpisms.d2SL R)) = FieldAutomorpisms.d2SL R 
+  have hd2_goal : innerAutSL3byGL3 g2 (φ (d2SL R)) = d2SL R 
   := by
     apply Subtype.ext
-    let d2m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.d2SL R)
-    let τ2 : Matrix (Fin 3) (Fin 3) R := ↑(φ (FieldAutomorpisms.d2SL R))
+    let d2m : Matrix (Fin 3) (Fin 3) R := ↑(d2SL R)
+    let τ2 : Matrix (Fin 3) (Fin 3) R := ↑(φ (d2SL R))
     change (↑g2 : Matrix (Fin 3) (Fin 3) R) * τ2 * (↑(g2⁻¹) : Matrix (Fin 3) (Fin 3) R) = d2m
     have h_phi_d2 : τ2 = d2m := congrArg Subtype.val hdiag_exact.2.1
     rw [h_phi_d2]
@@ -708,11 +709,11 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
       · simp [Matrix.diagonal_apply_ne _ h]
     rw [h_comm, Matrix.mul_assoc, Units.mul_inv g2, Matrix.mul_one]
   -- Prove fixing of d3
-  have hd3_goal : innerAutSL3byGL3 R g2 (φ (FieldAutomorpisms.d3SL R)) = FieldAutomorpisms.d3SL R 
+  have hd3_goal : innerAutSL3byGL3 g2 (φ (d3SL R)) = d3SL R 
   := by
     apply Subtype.ext
-    let d3m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.d3SL R)
-    let τ3 : Matrix (Fin 3) (Fin 3) R := ↑(φ (FieldAutomorpisms.d3SL R))
+    let d3m : Matrix (Fin 3) (Fin 3) R := ↑(d3SL R)
+    let τ3 : Matrix (Fin 3) (Fin 3) R := ↑(φ (d3SL R))
     change (↑g2 : Matrix (Fin 3) (Fin 3) R) * τ3 * (↑(g2⁻¹) : Matrix (Fin 3) (Fin 3) R) = d3m
     have h_phi_d3 : τ3 = d3m := congrArg Subtype.val hdiag_exact.2.2
     rw [h_phi_d3]
@@ -729,10 +730,10 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
       · simp [Matrix.diagonal_apply_ne _ h]
     rw [h_comm, Matrix.mul_assoc, Units.mul_inv g2, Matrix.mul_one]
   -- Prove fixing of w1
-  have hw1_goal : innerAutSL3byGL3 R g2 (φ (FieldAutomorpisms.w1SL R)) = FieldAutomorpisms.w1SL R 
+  have hw1_goal : innerAutSL3byGL3 g2 (φ (w1SL R)) = w1SL R 
   := by
     apply Subtype.ext
-    let w1m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.w1SL R)
+    let w1m : Matrix (Fin 3) (Fin 3) R := ↑(w1SL R)
     change (↑g2 : Matrix (Fin 3) (Fin 3) R) * v1_mat * (↑(g2⁻¹) : Matrix (Fin 3) (Fin 3) R) = w1m
     have h_mul_inv : (↑g2 : Matrix (Fin 3) (Fin 3) R) * v1_mat *
     (↑(g2⁻¹) : Matrix (Fin 3) (Fin 3) R) =
@@ -759,64 +760,64 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
            _ = (x * 2) * ⅟(2 : R) := by ring
            _ = 0 * ⅟(2 : R) := by rw [h2]
            _ = 0 := by ring
-    let d1m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.d1SL R)
-    let d2m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.d2SL R)
-    let d3m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.d3SL R)
+    let d1m : Matrix (Fin 3) (Fin 3) R := ↑(d1SL R)
+    let d2m : Matrix (Fin 3) (Fin 3) R := ↑(d2SL R)
+    let d3m : Matrix (Fin 3) (Fin 3) R := ↑(d3SL R)
     have eq_d3 : v1_mat * d3m = d3m * v1_mat := by
-      have h_sl3 : FieldAutomorpisms.w1SL R * FieldAutomorpisms.d3SL R =
-      FieldAutomorpisms.d3SL R * FieldAutomorpisms.w1SL R := by
+      have h_sl3 : w1SL R * d3SL R =
+      d3SL R * w1SL R := by
         apply Subtype.ext
-        change FieldAutomorpisms.w1 R * FieldAutomorpisms.d3 R =
-        FieldAutomorpisms.d3 R * FieldAutomorpisms.w1 R
+        change w1 R * d3 R =
+        d3 R * w1 R
         ext i j
-        dsimp [FieldAutomorpisms.w1, FieldAutomorpisms.d3]
+        dsimp [w1, d3]
         rw [Matrix.mul_apply, Matrix.mul_apply]
         rw [Fin.sum_univ_three, Fin.sum_univ_three]
         fin_cases i <;> fin_cases j <;> (simp)
       have h_phi_eq := congrArg φ h_sl3
       rw [map_mul, map_mul] at h_phi_eq
-      have h_mat_eq : v1_mat * (↑(φ (FieldAutomorpisms.d3SL R)) : Matrix (Fin 3) (Fin 3) R) =
-      (↑(φ (FieldAutomorpisms.d3SL R)) : Matrix (Fin 3) (Fin 3) R) * v1_mat :=
+      have h_mat_eq : v1_mat * (↑(φ (d3SL R)) : Matrix (Fin 3) (Fin 3) R) =
+      (↑(φ (d3SL R)) : Matrix (Fin 3) (Fin 3) R) * v1_mat :=
         congrArg (fun x : SL3 R => (↑x : Matrix (Fin 3) (Fin 3) R)) h_phi_eq
-      have h_phi_d3 : ↑(φ (FieldAutomorpisms.d3SL R)) = d3m := congrArg Subtype.val hdiag_exact.2.2
+      have h_phi_d3 : ↑(φ (d3SL R)) = d3m := congrArg Subtype.val hdiag_exact.2.2
       rw [h_phi_d3] at h_mat_eq
       exact h_mat_eq
     have eq_d1 : v1_mat * d1m = d2m * v1_mat := by
-      have h_sl3 : FieldAutomorpisms.w1SL R * FieldAutomorpisms.d1SL R =
-      FieldAutomorpisms.d2SL R * FieldAutomorpisms.w1SL R := by
+      have h_sl3 : w1SL R * d1SL R =
+      d2SL R * w1SL R := by
         apply Subtype.ext
-        change FieldAutomorpisms.w1 R * FieldAutomorpisms.d1 R =
-        FieldAutomorpisms.d2 R * FieldAutomorpisms.w1 R
+        change w1 R * d1 R =
+        d2 R * w1 R
         ext i j
-        dsimp [FieldAutomorpisms.w1, FieldAutomorpisms.d1, FieldAutomorpisms.d2]
+        dsimp [w1, d1, d2]
         rw [Matrix.mul_apply, Matrix.mul_apply]
         rw [Fin.sum_univ_three, Fin.sum_univ_three]
         fin_cases i <;> fin_cases j <;> (simp)
       have h_phi_eq := congrArg φ h_sl3
       rw [map_mul, map_mul] at h_phi_eq
-      have h_mat_eq : v1_mat * (↑(φ (FieldAutomorpisms.d1SL R)) : Matrix (Fin 3) (Fin 3) R) =
-      (↑(φ (FieldAutomorpisms.d2SL R)) : Matrix (Fin 3) (Fin 3) R) * v1_mat :=
+      have h_mat_eq : v1_mat * (↑(φ (d1SL R)) : Matrix (Fin 3) (Fin 3) R) =
+      (↑(φ (d2SL R)) : Matrix (Fin 3) (Fin 3) R) * v1_mat :=
         congrArg (fun x : SL3 R => (↑x : Matrix (Fin 3) (Fin 3) R)) h_phi_eq
-      have h_phi_d1 : ↑(φ (FieldAutomorpisms.d1SL R)) = d1m := congrArg Subtype.val hdiag_exact.1
-      have h_phi_d2 : ↑(φ (FieldAutomorpisms.d2SL R)) = d2m := congrArg Subtype.val hdiag_exact.2.1
+      have h_phi_d1 : ↑(φ (d1SL R)) = d1m := congrArg Subtype.val hdiag_exact.1
+      have h_phi_d2 : ↑(φ (d2SL R)) = d2m := congrArg Subtype.val hdiag_exact.2.1
       rw [h_phi_d1, h_phi_d2] at h_mat_eq
       exact h_mat_eq
     have eq_sq : v1_mat * v1_mat = d3m := by
-      have h_sl3 : FieldAutomorpisms.w1SL R * FieldAutomorpisms.w1SL R =
-      FieldAutomorpisms.d3SL R := by
+      have h_sl3 : w1SL R * w1SL R =
+      d3SL R := by
         apply Subtype.ext
-        change FieldAutomorpisms.w1 R * FieldAutomorpisms.w1 R = FieldAutomorpisms.d3 R
+        change w1 R * w1 R = d3 R
         ext i j
-        dsimp [FieldAutomorpisms.w1, FieldAutomorpisms.d3]
+        dsimp [w1, d3]
         rw [Matrix.mul_apply]
         rw [Fin.sum_univ_three]
         fin_cases i <;> fin_cases j <;> (simp)
       have h_phi_eq := congrArg φ h_sl3
       rw [map_mul] at h_phi_eq
       have h_mat_eq : v1_mat * v1_mat =
-      (↑(φ (FieldAutomorpisms.d3SL R)) : Matrix (Fin 3) (Fin 3) R) :=
+      (↑(φ (d3SL R)) : Matrix (Fin 3) (Fin 3) R) :=
         congrArg (fun x : SL3 R => (↑x : Matrix (Fin 3) (Fin 3) R)) h_phi_eq
-      have h_phi_d3 : ↑(φ (FieldAutomorpisms.d3SL R)) = d3m := congrArg Subtype.val hdiag_exact.2.2
+      have h_phi_d3 : ↑(φ (d3SL R)) = d3m := congrArg Subtype.val hdiag_exact.2.2
       rw [h_phi_d3] at h_mat_eq
       exact h_mat_eq
     have hd3_val : d3m = Matrix.diagonal ![-1, -1, 1] := rfl
@@ -916,7 +917,7 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
       rw [hd3_00, hv00, hv02] at h
       calc v1_mat 0 1 * v1_mat 1 0 = 0 * 0 + v1_mat 0 1 * v1_mat 1 0 + 0 * v1_mat 2 0 := by ring
            _ = -1 := h
-    have h_det : v1_mat.det = 1 := (φ (FieldAutomorpisms.w1SL R)).property
+    have h_det : v1_mat.det = 1 := (φ (w1SL R)).property
     have h_det_exp : v1_mat.det = - (v1_mat 0 1 * v1_mat 1 0 * v1_mat 2 2) := by
       rw [Matrix.det_fin_three]
       rw [hv00, hv11, hv20, hv21, hv02, hv12]
@@ -985,10 +986,10 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
       (0 : R) * 0 + 0 * 0 + 1 * ↑mu_u
       rw [hv22]; ring
   -- Prove fixing of w2
-  have hw2_goal : innerAutSL3byGL3 R g2 (φ (FieldAutomorpisms.w2SL R)) =
-  FieldAutomorpisms.w2SL R := by
+  have hw2_goal : innerAutSL3byGL3 g2 (φ (w2SL R)) =
+  w2SL R := by
     apply Subtype.ext
-    let w2m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.w2SL R)
+    let w2m : Matrix (Fin 3) (Fin 3) R := ↑(w2SL R)
     change (↑g2 : Matrix (Fin 3) (Fin 3) R) * v2_mat * (↑(g2⁻¹) : Matrix (Fin 3) (Fin 3) R) = w2m
     have h_mul_inv : (↑g2 : Matrix (Fin 3) (Fin 3) R) * v2_mat *
     (↑(g2⁻¹) : Matrix (Fin 3) (Fin 3) R) = w2m ↔ (↑g2 : Matrix (Fin 3) (Fin 3) R) * v2_mat =
@@ -1015,64 +1016,64 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
            _ = (x * 2) * ⅟(2 : R) := by ring
            _ = 0 * ⅟(2 : R) := by rw [h2]
            _ = 0 := by ring
-    let d1m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.d1SL R)
-    let d2m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.d2SL R)
-    let d3m : Matrix (Fin 3) (Fin 3) R := ↑(FieldAutomorpisms.d3SL R)
+    let d1m : Matrix (Fin 3) (Fin 3) R := ↑(d1SL R)
+    let d2m : Matrix (Fin 3) (Fin 3) R := ↑(d2SL R)
+    let d3m : Matrix (Fin 3) (Fin 3) R := ↑(d3SL R)
     have eq_d1_v2 : v2_mat * d1m = d1m * v2_mat := by
-      have h_sl3 : FieldAutomorpisms.w2SL R * FieldAutomorpisms.d1SL R =
-      FieldAutomorpisms.d1SL R * FieldAutomorpisms.w2SL R := by
+      have h_sl3 : w2SL R * d1SL R =
+      d1SL R * w2SL R := by
         apply Subtype.ext
-        change FieldAutomorpisms.w2 R * FieldAutomorpisms.d1 R =
-        FieldAutomorpisms.d1 R * FieldAutomorpisms.w2 R
+        change w2 R * d1 R =
+        d1 R * w2 R
         ext i j
-        dsimp [FieldAutomorpisms.w2, FieldAutomorpisms.d1]
+        dsimp [w2, d1]
         rw [Matrix.mul_apply, Matrix.mul_apply]
         rw [Fin.sum_univ_three, Fin.sum_univ_three]
         fin_cases i <;> fin_cases j <;> (simp)
       have h_phi_eq := congrArg φ h_sl3
       rw [map_mul, map_mul] at h_phi_eq
-      have h_mat_eq : v2_mat * (↑(φ (FieldAutomorpisms.d1SL R)) : Matrix (Fin 3) (Fin 3) R) =
-      (↑(φ (FieldAutomorpisms.d1SL R)) : Matrix (Fin 3) (Fin 3) R) * v2_mat :=
+      have h_mat_eq : v2_mat * (↑(φ (d1SL R)) : Matrix (Fin 3) (Fin 3) R) =
+      (↑(φ (d1SL R)) : Matrix (Fin 3) (Fin 3) R) * v2_mat :=
         congrArg (fun x : SL3 R => (↑x : Matrix (Fin 3) (Fin 3) R)) h_phi_eq
-      have h_phi_d1 : ↑(φ (FieldAutomorpisms.d1SL R)) = d1m := congrArg Subtype.val hdiag_exact.1
+      have h_phi_d1 : ↑(φ (d1SL R)) = d1m := congrArg Subtype.val hdiag_exact.1
       rw [h_phi_d1] at h_mat_eq
       exact h_mat_eq
     have eq_d2_v2 : v2_mat * d2m = d3m * v2_mat := by
-      have h_sl3 : FieldAutomorpisms.w2SL R * FieldAutomorpisms.d2SL R =
-      FieldAutomorpisms.d3SL R * FieldAutomorpisms.w2SL R := by
+      have h_sl3 : w2SL R * d2SL R =
+      d3SL R * w2SL R := by
         apply Subtype.ext
-        change FieldAutomorpisms.w2 R * FieldAutomorpisms.d2 R =
-        FieldAutomorpisms.d3 R * FieldAutomorpisms.w2 R
+        change w2 R * d2 R =
+        d3 R * w2 R
         ext i j
-        dsimp [FieldAutomorpisms.w2, FieldAutomorpisms.d2, FieldAutomorpisms.d3]
+        dsimp [w2, d2, d3]
         rw [Matrix.mul_apply, Matrix.mul_apply]
         rw [Fin.sum_univ_three, Fin.sum_univ_three]
         fin_cases i <;> fin_cases j <;> (simp)
       have h_phi_eq := congrArg φ h_sl3
       rw [map_mul, map_mul] at h_phi_eq
-      have h_mat_eq : v2_mat * (↑(φ (FieldAutomorpisms.d2SL R)) : Matrix (Fin 3) (Fin 3) R) =
-      (↑(φ (FieldAutomorpisms.d3SL R)) : Matrix (Fin 3) (Fin 3) R) * v2_mat :=
+      have h_mat_eq : v2_mat * (↑(φ (d2SL R)) : Matrix (Fin 3) (Fin 3) R) =
+      (↑(φ (d3SL R)) : Matrix (Fin 3) (Fin 3) R) * v2_mat :=
         congrArg (fun x : SL3 R => (↑x : Matrix (Fin 3) (Fin 3) R)) h_phi_eq
-      have h_phi_d2 : ↑(φ (FieldAutomorpisms.d2SL R)) = d2m := congrArg Subtype.val hdiag_exact.2.1
-      have h_phi_d3 : ↑(φ (FieldAutomorpisms.d3SL R)) = d3m := congrArg Subtype.val hdiag_exact.2.2
+      have h_phi_d2 : ↑(φ (d2SL R)) = d2m := congrArg Subtype.val hdiag_exact.2.1
+      have h_phi_d3 : ↑(φ (d3SL R)) = d3m := congrArg Subtype.val hdiag_exact.2.2
       rw [h_phi_d2, h_phi_d3] at h_mat_eq
       exact h_mat_eq
     have eq_sq_v2 : v2_mat * v2_mat = d1m := by
-      have h_sl3 : FieldAutomorpisms.w2SL R * FieldAutomorpisms.w2SL R =
-      FieldAutomorpisms.d1SL R := by
+      have h_sl3 : w2SL R * w2SL R =
+      d1SL R := by
         apply Subtype.ext
-        change FieldAutomorpisms.w2 R * FieldAutomorpisms.w2 R = FieldAutomorpisms.d1 R
+        change w2 R * w2 R = d1 R
         ext i j
-        dsimp [FieldAutomorpisms.w2, FieldAutomorpisms.d1]
+        dsimp [w2, d1]
         rw [Matrix.mul_apply]
         rw [Fin.sum_univ_three]
         fin_cases i <;> fin_cases j <;> (simp)
       have h_phi_eq := congrArg φ h_sl3
       rw [map_mul] at h_phi_eq
       have h_mat_eq : v2_mat * v2_mat =
-      (↑(φ (FieldAutomorpisms.d1SL R)) : Matrix (Fin 3) (Fin 3) R) :=
+      (↑(φ (d1SL R)) : Matrix (Fin 3) (Fin 3) R) :=
         congrArg (fun x : SL3 R => (↑x : Matrix (Fin 3) (Fin 3) R)) h_phi_eq
-      have h_phi_d1 : ↑(φ (FieldAutomorpisms.d1SL R)) = d1m := congrArg Subtype.val hdiag_exact.1
+      have h_phi_d1 : ↑(φ (d1SL R)) = d1m := congrArg Subtype.val hdiag_exact.1
       rw [h_phi_d1] at h_mat_eq
       exact h_mat_eq
     have hd1_val : d1m = Matrix.diagonal ![1, -1, -1] := rfl
@@ -1171,7 +1172,7 @@ theorem signed_transpositions_preserved_after_local_change_of_basis
       rw [hd1_11, hv10, hv11] at h
       calc v2_mat 1 2 * v2_mat 2 1 = 0 * v2_mat 0 1 + 0 * 0 + v2_mat 1 2 * v2_mat 2 1 := by ring
            _ = -1 := h
-    have h_det : v2_mat.det = 1 := (φ (FieldAutomorpisms.w2SL R)).property
+    have h_det : v2_mat.det = 1 := (φ (w2SL R)).property
     have h_det_exp : v2_mat.det = - (v2_mat 0 0 * v2_mat 1 2 * v2_mat 2 1) := by
       rw [Matrix.det_fin_three]
       rw [hv01, hv02, hv10, hv20, hv11, hv22]
@@ -1251,12 +1252,12 @@ be fixed exactly.
 theorem transvections_one_preserved_after_local_normalization
     (φ : AutSL3 R)
     (hdiag_w_exact :
-      φ (FieldAutomorpisms.d1SL R) = FieldAutomorpisms.d1SL R ∧
-      φ (FieldAutomorpisms.d2SL R) = FieldAutomorpisms.d2SL R ∧
-      φ (FieldAutomorpisms.d3SL R) = FieldAutomorpisms.d3SL R ∧
-      φ (FieldAutomorpisms.w1SL R) = FieldAutomorpisms.w1SL R ∧
-      φ (FieldAutomorpisms.w2SL R) = FieldAutomorpisms.w2SL R)
-    (hx12_mod : SL3FixedModJ R φ (FieldAutomorpisms.x12SL R)) :
+      φ (d1SL R) = d1SL R ∧
+      φ (d2SL R) = d2SL R ∧
+      φ (d3SL R) = d3SL R ∧
+      φ (w1SL R) = w1SL R ∧
+      φ (w2SL R) = w2SL R)
+    (hx12_mod : SL3FixedModJ R φ (x12SL R)) :
     ∀ i j : Fin 3, ∀ hij : i ≠ j,
       φ (xijSL R i j hij 1) = xijSL R i j hij 1 := by
   sorry
@@ -1287,7 +1288,7 @@ of Block 4.
 def IsStandardSL3AutNoGraph (φ : AutSL3 R) : Prop :=
   ∃ (σ : R ≃+* R) (g : GL3 R),
     ∀ x : SL3 R,
-      φ x = ringAutSL3 R σ (innerAutSL3byGL3 R g x)
+      φ x = (innerAutSL3byGL3 g x).map σ
 
 /--
 The standard form used for the final theorem: inner automorphism, entrywise ring
@@ -1297,9 +1298,8 @@ def IsStandardSL3Aut (φ : AutSL3 R) : Prop :=
   ∃ (σ : R ≃+* R) (ε : Bool) (g : GL3 R),
     ∀ x : SL3 R,
       φ x =
-        ringAutSL3 R σ
-          ((FieldAutomorpisms.graphChoiceSL3 R ε)
-            (innerAutSL3byGL3 R g x))
+          ((graphChoiceSL3 ε)
+            (innerAutSL3byGL3 g x)).map σ
 
 /--
 Theorem 3 / Block 4, normalized local-ring statement.
@@ -1323,7 +1323,7 @@ theorem local_class
   refine ⟨σ, false, g, ?_⟩
   intro x
   simpa [IsStandardSL3AutNoGraph, IsStandardSL3Aut,
-    FieldAutomorpisms.graphChoiceSL3] using hσg x
+    graphChoiceSL3] using hσg x
 
 end LocalAutomorphisms
 
