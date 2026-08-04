@@ -1754,48 +1754,28 @@ theorem w_preserved
       ⟩
   simp only [innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk, Units.inv_mk]
   have diag_preserved:
-    g * SpecialLinearGroup.toGL (φ (d1SL F)) * g⁻¹ = d1 F ∧
-    g * SpecialLinearGroup.toGL (φ (d2SL F)) * g⁻¹ = d2 F ∧
-    g * SpecialLinearGroup.toGL (φ (d3SL F)) * g⁻¹ = d3 F :=
+    g * (φ (d1SL F)).toGL * g⁻¹ = d1 F ∧
+    g * (φ (d2SL F)).toGL * g⁻¹ = d2 F ∧
+    g * (φ (d3SL F)).toGL * g⁻¹ = d3 F :=
       ⟨ congrArg Subtype.val hd1, congrArg Subtype.val hd2, congrArg Subtype.val hd3 ⟩
-  exact ⟨
-    by
-      congr
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], diag_preserved.left, d1, diagonal_fin_three]
-      simp
-      exact ⟨ l1unit.inv_mul_cancel, l2unit.mul_inv_cancel ⟩,
-    by
-      congr
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], diag_preserved.right.left, d2,
-          diagonal_fin_three]
-      simp
-      exact ⟨ l1unit.inv_mul_cancel, l2unit.mul_inv_cancel ⟩,
-    by
-      congr
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], diag_preserved.right.right, d3,
-          diagonal_fin_three]
-      simp
-      exact ⟨ l1unit.inv_mul_cancel, l2unit.mul_inv_cancel ⟩,
-    by
-      congr
-      simp only [v1, innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk] at hl1
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], hl1, w1, mul_fin_three, mul_fin_three]
-      simp only [zero_mul, add_zero, mul_zero, zero_add]
-      rw [mul_one, mul_one, one_mul, neg_eq_neg_one_mul, mul_assoc, l2unit.mul_inv_cancel,
-          l1unit.inv_mul_cancel, mul_one],
-    by
-      congr
-      simp only [v2, innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk] at hl2
-      rw [← mul_assoc, mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
-          mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], hl2, w2, mul_fin_three, mul_fin_three]
-      simp only [zero_mul, add_zero, mul_zero, zero_add]
-      rw [mul_one, mul_one, one_mul, neg_eq_neg_one_mul, ← mul_assoc, mul_comm _ (-1), mul_assoc,
-          l2unit.mul_inv_cancel, l1unit.inv_mul_cancel, mul_one]
-  ⟩
+  simp only [v1, innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk] at hl1
+  simp only [v2, innerAutSL3byGL3, MulEquiv.coe_mk, Equiv.coe_fn_mk] at hl2
+  repeat' constructor
+  all_goals congr
+  all_goals rw [
+      ← mul_assoc,
+      mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2],
+      mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2]
+    ]
+  any_goals simp only [diag_preserved, d1, d2, d3, diagonal_fin_three]
+  · simp [l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+  · simp [l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+  · simp [l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+  · rw [mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], hl1, w1, mul_fin_three, mul_fin_three]
+    simp [zero_mul, add_zero, mul_zero, zero_add, l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+  · rw [mul_assoc !![l1⁻¹, 0, 0; 0, 1, 0; 0, 0, l2], hl2, w2, mul_fin_three, mul_fin_three]
+    simp [zero_mul, add_zero, mul_zero, zero_add, l1unit.inv_mul_cancel, l2unit.mul_inv_cancel]
+
 
 
 def x12 : Matrix (Fin 3) (Fin 3) R :=
