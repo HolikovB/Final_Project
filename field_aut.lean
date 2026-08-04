@@ -2606,6 +2606,31 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
     exact ⟨h_phi3_d1, h_phi3_d2, h_phi3_d3, h_phi3_w1, h_phi3_w2, h_phi3_x12⟩
 
 
+theorem all_xij1_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x13SL F))) = x13SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x23SL F))) = x23SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x32SL' F))) = x32SL' F := by
+  rcases x12_preserved F φ with ⟨g, ε, ⟨hgd1, hgd2, hgd3, hgw1, hgw2, hgx12⟩⟩
+  use g, ε
+  have cong_x13 : x13SL F = (w2SL F)⁻¹ * x12SL F * w2SL F := by
+    apply Subtype.ext
+    simp [x12SL, x13SL, w2SL, x13, x12, w2]
+  have cong_x23 : x23SL F = (w1SL F) * (w2SL F) * x12SL F * (w2SL F)⁻¹ * (w1SL F)⁻¹ := by
+    apply Subtype.ext
+    simp [x12SL, x23SL, w1SL, w2SL, x23, x12, w1, w2]
+  have cong_x32 : x32SL' F = (w2SL F) * (w1SL F) * (w2SL F) * x12SL F * (w2SL F)⁻¹ * (w1SL F)⁻¹ * (w2SL F)⁻¹ := by
+    apply Subtype.ext
+    simp [x12SL, x32SL', w1SL, w2SL, x12, w1, w2]
+    rfl
+  simp [*]
+
+
 theorem transv_to_transv_same_coeff (φ : AutSL3 (R)) :
 (φ (d1SL R)  = d1SL R ∧
 φ (d2SL R)  = d2SL R ∧
