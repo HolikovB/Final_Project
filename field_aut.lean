@@ -13,6 +13,7 @@ import cong_subgroup
 
 open Matrix BigOperators
 open scoped MatrixGroups
+open CongruenceSubgroup (TransvectionSL3 IsTransvectionSL3 TransvectionSetSL3)
 noncomputable section
 
 
@@ -2605,19 +2606,13 @@ theorem x12_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
     exact ⟨h_phi3_d1, h_phi3_d2, h_phi3_d3, h_phi3_w1, h_phi3_w2, h_phi3_x12⟩
 
 
-def IsTransvectionSL3 (x : SL3 R) : Prop :=
-  ∃ i j : Fin 3, ∃ c : R,
-    i ≠ j ∧
-    (x : Matrix (Fin 3) (Fin 3) R) =
-      Matrix.transvection i j c
-
 theorem transv_to_transv_same_coeff (φ : AutSL3 (R)) :
 (φ (d1SL R)  = d1SL R ∧
 φ (d2SL R)  = d2SL R ∧
 φ (d3SL R)  = d3SL R ∧
 φ (w1SL R) = w1SL R ∧
 φ (w2SL R) = w2SL R ∧
-φ (x12SL R) = x12SL R) → ∃ (f : R ≃+* R), ∀ (E : SL3 R) , (IsTransvectionSL3 R E) → φ E = E.map f:= by sorry
+φ (x12SL R) = x12SL R) → ∃ (f : R ≃+* R), ∀ (E : SL3 R), (IsTransvectionSL3 E) → φ E = E.map f:= by sorry
 
 
 
