@@ -3177,11 +3177,6 @@ theorem transv_to_transv_same_coeff_F (φ : AutSL3 (F)) :
     have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 1) hab.symm
     simp [TransvectionSL3, transvection] at this
     exact this
-  have neg_preserved : ∀ a : F, f (-a) = -f a := by
-    intro a
-    have := add_preserved a (-a)
-    simp [zero_preserved] at this
-    simp [eq_neg_of_add_eq_zero_left this.symm]
   have mul_preserved : ∀ a b, f (a*b) = f a * f b := by
     intro a b
     have ha := hf 0 1 a (by simp)
@@ -3192,11 +3187,10 @@ theorem transv_to_transv_same_coeff_F (φ : AutSL3 (F)) :
         * (TransvectionSL3 0 1 x (by simp))⁻¹ * (TransvectionSL3 1 2 y (by simp))⁻¹
         := by
       simp [TransvectionSL3_inv]
-      apply Subtype.ext
       simp [TransvectionSL3, transvection]
       ext i j
       fin_cases i <;> fin_cases j
-        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+        <;> simp [mul_apply, Fin.sum_univ_three, one_apply]
     simp [commutator a b, ha, hb] at hab
     rw [<-commutator (f a) (f b)] at hab
     have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 2) hab.symm
