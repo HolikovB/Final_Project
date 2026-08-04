@@ -3160,15 +3160,87 @@ theorem transvections_preserved_unique (φ : AutSL3 F) :
     simp [conj, hf, hw1, hw2]
 
 
-theorem transv_to_transv_same_coeff (φ : AutSL3 (R)) :
-(φ (d1SL R)  = d1SL R ∧
-φ (d2SL R)  = d2SL R ∧
-φ (d3SL R)  = d3SL R ∧
-φ (w1SL R) = w1SL R ∧
-φ (w2SL R) = w2SL R ∧
-φ (x12SL R) = x12SL R) → ∃ (f : R ≃+* R), ∀ (E : SL3 R), (IsTransvectionSL3 E) → φ E = E.map f:= by sorry
-
-
+theorem transv_to_transv_same_coeff_F (φ : AutSL3 (F)) :
+    ∃ (g : GL3 F) (ε : Bool) (σ: F ≃+* F), ∀ (E : SL3 F), (IsTransvectionSL3 E)
+    → (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ E)) = E.map σ := by
+  rcases transvections_preserved_unique F φ with
+      ⟨g, ε, hd1, hd2, hd3, hw1, hw2, hx12, hx13, hx23, hx32', f, hbij, hf⟩
+  use g, ε
+  have one_as_transvection01 : (1:SL3 F) = TransvectionSL3 0 1 0 (by simp) := by
+    apply Subtype.ext
+    simp [TransvectionSL3]
+  have zero_preserved : f 0 = 0 := by
+    have h := hf 0 1 0 (by simp)
+    simp [<-one_as_transvection01] at h
+    have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 1) h.symm
+    simp [TransvectionSL3, transvection] at this
+    exact this
+  have one_preserved : f 1 = 1 := by
+    have h := hf 0 1 1 (by simp)
+    rw [<-x12SL.eq_TransvectionSL3, hx12] at h
+    have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 1) h.symm
+    simp [TransvectionSL3, transvection, x12SL, x12] at this
+    exact this
+  have add_preserved : ∀ a b, f (a+b) = f a + f b := by
+    intro a b
+    have hab := hf 0 1 (a+b) (by simp)
+    have ha := hf 0 1 a (by simp)
+    have hb := hf 0 1 b (by simp)
+    rw [TransvectionSL3_mul_TransvectionSL3_same, deep_comm] at hab
+    simp [ha, hb] at hab
+    rw [<-TransvectionSL3_mul_TransvectionSL3_same] at hab
+    have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 1) hab.symm
+    simp [TransvectionSL3, transvection] at this
+    exact this
+  have neg_preserved : ∀ a : F, f (-a) = -f a := by
+    intro a
+    have := add_preserved a (-a)
+    simp [zero_preserved] at this
+    simp [eq_neg_of_add_eq_zero_left this.symm]
+  have mul_preserved : ∀ a b, f (a*b) = f a * f b := by
+    intro a b
+    have ha := hf 0 1 a (by simp)
+    have hb := hf 1 2 b (by simp)
+    have hab := hf 0 2 (a*b) (by simp)
+    have commutator (x y : F) : TransvectionSL3 0 2 (x*y) (by simp) =
+        (TransvectionSL3 0 1 x (by simp)) * (TransvectionSL3 1 2 y (by simp))
+        * (TransvectionSL3 0 1 x (by simp))⁻¹ * (TransvectionSL3 1 2 y (by simp))⁻¹
+        := by
+      simp [TransvectionSL3_inv]
+      apply Subtype.ext
+      simp [TransvectionSL3, transvection]
+      ext i j
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+    simp [commutator a b, ha, hb] at hab
+    rw [<-commutator (f a) (f b)] at hab
+    have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 2) hab.symm
+    simp [TransvectionSL3, transvection] at this
+    exact this
+  set fHom : F →+* F := {
+      toFun    := f
+      map_zero' := zero_preserved
+      map_one'  := one_preserved
+      map_add'  := add_preserved
+      map_mul'  := mul_preserved
+    } with fHom.def
+  set fIso : F ≃+* F := RingEquiv.ofBijective fHom hbij with fIso.def
+  have hfIso : ∀ c, fIso c = f c := by
+    intro c
+    simp [fIso.def, fHom.def]
+  use fIso
+  intro E hE
+  rcases hE with ⟨i, j, c, inej, hE⟩
+  rw [hE, hf i j c inej]
+  simp [TransvectionSL3, transvection, single, SpecialLinearGroup.map]
+  fin_cases i <;> fin_cases j
+    <;> simp at inej
+    <;> simp at hE
+    <;> simp
+    <;> ext i j
+    <;> fin_cases i
+      <;> fin_cases j
+      <;> simp [hfIso, one_preserved, zero_preserved]
 
 
 theorem field_class
