@@ -3014,12 +3014,12 @@ theorem transvection_12_preserved_unique_and_on (φ : AutSL3 F) :
       exact transv_comm_transv 0 1 2 1 b (-1) (by simp)
     rw [<-hY, <-hx32', <-deep_comm, <-deep_comm] at pre_comm
     exact hbij.injective pre_comm
-  rcases _cong_comm_mat_helper 
+  rcases _cong_comm_mat_helper
       Y_comm_x12SL
       Y_comm_x13SL
       Y_comm_x32SL'
       Z_as_cong
-      Z_as_comm 
+      Z_as_comm
     with ⟨t, Ymat, Zmat⟩
   use t
   simp
