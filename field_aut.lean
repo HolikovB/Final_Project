@@ -2933,6 +2933,128 @@ theorem transvection_12_preserved (φ : AutSL3 F) :
   fin_cases i <;> fin_cases j <;> rw [hY] <;> simp
 
 
+theorem transvection_12_preserved_unique_and_on (φ : AutSL3 F) :
+    ∃ (g : GL3 F) (ε : Bool),
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x13SL F))) = x13SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x23SL F))) = x23SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x32SL' F))) = x32SL' F ∧
+    (∀ (u : F), ∃! (u' : F),
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g)
+      (φ (TransvectionSL3 0 1 u (by simp)))) = (TransvectionSL3 0 1 u' (by simp)))
+    ∧ (∀ (u' : F), ∃! (u : F),
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g)
+      (φ (TransvectionSL3 0 1 u (by simp)))) = (TransvectionSL3 0 1 u' (by simp)))
+    := by
+  rcases transvection_12_preserved F φ with
+      ⟨g, ε, hd1, hd2, hd3, hw1, hw2, hx12, hx13, hx23, hx32', find⟩
+  use g, ε
+  simp [*]
+  constructor
+  -- u -> u'
+  intro u
+  rcases find u with ⟨u', hu'⟩
+  use u'
+  simp [hu']
+  intro v' h
+  have := congr_arg (fun M : SL3 F => (M : SL3 F) 0 1) h
+  simp [TransvectionSL3, transvection] at this
+  exact this.symm
+  -- u' -> u
+  intro b
+  have hbij : Function.Bijective (fun E =>
+      (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ E))) := by
+    apply Function.Bijective.comp
+    exact (graphChoiceSL3 ε).bijective
+    apply Function.Bijective.comp
+    exact (innerAutSL3byGL3 g).bijective
+    exact φ.bijective
+  rcases hbij.surjective (TransvectionSL3 0 1 b (by simp)) with ⟨Y, hY⟩
+  rcases hbij.surjective (TransvectionSL3 0 2 b (by simp)) with ⟨Z, hZ⟩
+  simp at hY
+  simp at hZ
+  have Z_as_cong : Z = (w2SL F)⁻¹ * Y * (w2SL F) := by
+    have pre_eq : (TransvectionSL3 0 2 b (by simp)) =
+      (w2SL F)⁻¹ * (TransvectionSL3 0 1 b (by simp)) * (w2SL F) := by
+      apply Subtype.ext
+      simp [w2SL, w2, TransvectionSL3, transvection, single, mul_add, vecHead, vecTail]
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp
+    rw [<-hY, <-hZ, <-hw2,
+        <-map_inv, <-map_inv, <-map_inv,
+        <-deep_comm, <-deep_comm] at pre_eq
+    exact hbij.injective pre_eq
+  have Z_as_comm: Z = (x23SL F)⁻¹ * Y * (x23SL F) * Y⁻¹ := by
+    have pre_eq : (TransvectionSL3 0 2 b (by simp)) =
+        (x23SL F)⁻¹ * (TransvectionSL3 0 1 b (by simp)) * (x23SL F) * (TransvectionSL3 0 1 b (by simp))⁻¹
+        := by
+      simp only [x23SL.eq_TransvectionSL3, TransvectionSL3_inv]
+      apply Subtype.ext
+      simp [TransvectionSL3, transvection, single, mul_add]
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp [of_apply, add_apply, mul_apply, Fin.sum_univ_three]
+    rw [<-hY, <-hZ, <-hx23,
+        <-map_inv, <-map_inv, <-map_inv, <-map_inv, <-map_inv, <-map_inv,
+        <-deep_comm, <-deep_comm, <-deep_comm] at pre_eq
+    exact hbij.injective pre_eq
+  have Y_comm_x12SL : Y * x12SL F = x12SL F * Y := by
+    have pre_comm :
+        (TransvectionSL3 0 1 b (by simp)) * x12SL F =
+        x12SL F * (TransvectionSL3 0 1 b (by simp)) := by
+      apply Subtype.ext
+      simp [x12SL.eq_TransvectionSL3, TransvectionSL3]
+      exact transv_comm_transv 0 1 0 1 b 1 (by simp)
+    rw [<-hY, <-hx12, <-deep_comm, <-deep_comm] at pre_comm
+    exact hbij.injective pre_comm
+  have Y_comm_x13SL : Y * x13SL F = x13SL F * Y := by
+    have pre_comm :
+        (TransvectionSL3 0 1 b (by simp)) * x13SL F =
+        x13SL F * (TransvectionSL3 0 1 b (by simp)) := by
+      apply Subtype.ext
+      simp [x13SL.eq_TransvectionSL3, TransvectionSL3]
+      exact transv_comm_transv 0 1 0 2 b 1 (by simp)
+    rw [<-hY, <-hx13, <-deep_comm, <-deep_comm] at pre_comm
+    exact hbij.injective pre_comm
+  have Y_comm_x32SL' : Y * (x32SL' F) = (x32SL' F) * Y := by
+    have pre_comm :
+        (TransvectionSL3 0 1 b (by simp)) * x32SL' F =
+        x32SL' F * (TransvectionSL3 0 1 b (by simp)) := by
+      apply Subtype.ext
+      simp [x32SL'.eq_TransvectionSL3, TransvectionSL3]
+      exact transv_comm_transv 0 1 2 1 b (-1) (by simp)
+    rw [<-hY, <-hx32', <-deep_comm, <-deep_comm] at pre_comm
+    exact hbij.injective pre_comm
+  rcases _cong_comm_mat_helper 
+      Y_comm_x12SL
+      Y_comm_x13SL
+      Y_comm_x32SL'
+      Z_as_cong
+      Z_as_comm 
+    with ⟨t, Ymat, Zmat⟩
+  use t
+  simp
+  have Y_as_transv : Y = TransvectionSL3 0 1 t (by simp) := by
+    apply Subtype.ext
+    simp [TransvectionSL3, transvection, single]
+    ext i j
+    fin_cases i <;> fin_cases j <;> rw [Ymat] <;> simp
+  constructor
+  rw [<-Y_as_transv]
+  exact hY
+  -- UNIQNESS
+  intro y' hy'
+  have : TransvectionSL3 0 1 y' (by simp) = Y :=
+    hbij.injective (hy'.trans hY.symm)
+  have := entries_gen this 0 1
+  simp [TransvectionSL3, transvection, single, of_apply, Ymat] at this
+  exact this
+
+
 theorem transv_to_transv_same_coeff (φ : AutSL3 (R)) :
 (φ (d1SL R)  = d1SL R ∧
 φ (d2SL R)  = d2SL R ∧
