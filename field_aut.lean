@@ -2631,6 +2631,120 @@ theorem all_xij1_preserved (φ : AutSL3 F) : ∃ (g : GL3 F) (ε : Bool),
   simp [*]
 
 
+theorem TransvectionSL3_inv (i j : Fin 3) (x : R) (h : i ≠ j) :
+    (TransvectionSL3 i j x h)⁻¹ = TransvectionSL3 i j (-x) h := by
+  have : (TransvectionSL3 i j x h) * (TransvectionSL3 i j (-x) h) = 1 := by
+    apply Subtype.ext
+    simp [TransvectionSL3]
+    rw [transvection_mul_transvection_same]
+    simp
+    exact h
+  exact inv_eq_of_mul_eq_one_right this
+
+
+theorem TransvectionSL3_mul_TransvectionSL3_same {i j : Fin 3} {x y : R} {h : i ≠ j} :
+    TransvectionSL3 i j (x+y) h = (TransvectionSL3 i j x h) * (TransvectionSL3 i j y h) := by
+  apply Subtype.ext
+  simp [TransvectionSL3, transvection_mul_transvection_same i j h]
+
+
+theorem x12SL.eq_TransvectionSL3 : (x12SL R) = TransvectionSL3 0 1 1 (by simp) := by
+  apply Subtype.ext
+  simp [x12SL, x12, TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+theorem x13SL.eq_TransvectionSL3 : (x13SL R) = TransvectionSL3 0 2 1 (by simp) := by
+  apply Subtype.ext
+  simp [x13SL, x13, TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+theorem x23SL.eq_TransvectionSL3 : (x23SL R) = TransvectionSL3 1 2 1 (by simp) := by
+  apply Subtype.ext
+  simp [x23SL, x23, TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+theorem x32SL.eq_TransvectionSL3 : (x32SL R) = TransvectionSL3 2 1 1 (by simp) := by
+  apply Subtype.ext
+  simp [x32SL, x32, TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+theorem x32SL'.eq_TransvectionSL3 : (x32SL' R) = TransvectionSL3 2 1 (-1) (by simp) := by
+  apply Subtype.ext
+  simp [x32SL', x32', TransvectionSL3, transvection]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
+
+
+theorem transv_comm_transv'
+    {R : Type*} [CommRing R]
+    (i j k l : Fin 3) (a b : R)
+    (hA : i ≠ j) (hB : k ≠ l)
+    (h1 : i ≠ l) (h2 : j ≠ k) :
+    transvection i j a * transvection k l b =
+    transvection k l b * transvection i j a := by
+  ext x y
+  simp [mul_apply, transvection, single, Fin.sum_univ_three]
+  have unequal_pair {u v : Fin 3} (h : u ≠ v) (t : Fin 3): ¬ ( u = t ∧ v = t) :=
+      fun ⟨l, r⟩ => h (Eq.trans l r.symm)
+  have abba : b * a = a * b := by ring
+  have reorder  {a b: R} (i' j' k' l' : Fin 3) :
+      (if k = k' ∧ l = l' then (if i = i' ∧ j = j' then a*b else 0) else 0) =
+      (if i = i' ∧ j = j' then (if k = k' ∧ l = l' then a*b else 0) else 0)
+      := by
+    split_ifs
+    all_goals simp
+  have eliminate  {a b: R} (i' j' k' l' : Fin 3) (hor : i' = l' ∨ j' = k'):
+      (if i = i' ∧ j = j' then (if k = k' ∧ l = l' then a*b else 0) else 0) = 0
+      := by
+    split_ifs <;> rcases hor with il | jk
+    any_goals simp
+    all_goals
+      rename_i h h'
+      exfalso
+    rw [il] at h
+    exact h1 (h.left.trans h'.right.symm)
+    rw [jk] at h
+    exact h2 (h.right.trans h'.left.symm)
+  have eliminate.il  {a b: R} (i' j' k' l' : Fin 3) (hil : i' = l'):
+      (if i = i' ∧ j = j' then (if k = k' ∧ l = l' then a*b else 0) else 0) = 0
+    := eliminate i' j' k' l' (by left; exact hil)
+  have eliminate.jk  {a b: R} (i' j' k' l' : Fin 3) (hjk : j' = k'):
+      (if i = i' ∧ j = j' then (if k = k' ∧ l = l' then a*b else 0) else 0) = 0
+    := eliminate i' j' k' l' (by right; exact hjk)
+  -- Now we only have to normalize order and eliminate every case
+  fin_cases x <;>
+  fin_cases y <;>
+    try simp [
+      unequal_pair hA 0, unequal_pair hA 1, unequal_pair hA 2,
+      unequal_pair hB 0, unequal_pair hB 1, unequal_pair hB 2,
+      abba, zero_mul,
+      reorder 0 1 1 0, reorder 0 1 1 2, reorder 0 2 2 0, reorder 0 2 2 1,
+      reorder 1 0 0 1, reorder 1 0 0 2, reorder 1 2 2 0, reorder 1 2 2 1,
+      reorder 2 0 0 1, reorder 2 0 0 2, reorder 2 1 1 0, reorder 2 1 1 2,
+      eliminate.jk 0 1 1 0 rfl, eliminate.jk 0 1 1 2 rfl, eliminate.jk 0 2 2 0 rfl, eliminate.jk 0 2 2 1 rfl,
+      eliminate.jk 1 0 0 1 rfl, eliminate.jk 1 0 0 2 rfl, eliminate.jk 1 2 2 0 rfl, eliminate.jk 1 2 2 1 rfl,
+      eliminate.jk 2 0 0 1 rfl, eliminate.jk 2 0 0 2 rfl, eliminate.jk 2 1 1 0 rfl, eliminate.jk 2 1 1 2 rfl,
+      eliminate.il 0 1 2 0 rfl, eliminate.il 0 2 1 0 rfl, eliminate.il 1 0 2 1 rfl, eliminate.il 1 2 0 1 rfl,
+      eliminate.il 2 0 1 2 rfl, eliminate.il 2 1 0 2 rfl
+    ]
+  --
+  all_goals split_ifs <;> rename_i hkl hij
+  any_goals simp [one_apply, add_comm]
+  --
+
+theorem transv_comm_transv
+    {R : Type*} [CommRing R]
+    (i j k l : Fin 3) (a b : R)
+    (H : i ≠ j ∧  k ≠ l ∧  i ≠ l ∧ j ≠ k) :
+    transvection i j a * transvection k l b =
+    transvection k l b * transvection i j a := by
+  rcases H with ⟨A, B, P, Q⟩
+  exact transv_comm_transv' i j k l a b A B P Q
+
 theorem transv_to_transv_same_coeff (φ : AutSL3 (R)) :
 (φ (d1SL R)  = d1SL R ∧
 φ (d2SL R)  = d2SL R ∧
