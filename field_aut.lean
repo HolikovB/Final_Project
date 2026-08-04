@@ -13,7 +13,12 @@ import cong_subgroup
 
 open Matrix BigOperators
 open scoped MatrixGroups
-open CongruenceSubgroup (TransvectionSL3 IsTransvectionSL3 TransvectionSetSL3)
+open CongruenceSubgroup (
+    TransvectionSL3
+    IsTransvectionSL3
+    TransvectionSetSL3
+    SL3_generated_by_transvections
+    )
 noncomputable section
 
 
@@ -3243,13 +3248,38 @@ theorem transv_to_transv_same_coeff_F (φ : AutSL3 (F)) :
       <;> simp [hfIso, one_preserved, zero_preserved]
 
 
-theorem field_class
-    (φ : AutSL3 F) :
+theorem field_class (φ : AutSL3 F) :
     ∃ (σ : F ≃+* F) (ε : Bool) (g : GL (Fin 3) F),
       ∀ (x : SL3 F),
-        φ x =
-            SpecialLinearGroup.map σ ((graphChoiceSL3 ε) (innerAutSL3byGL3 g x))
-             := by
-  sorry
+        φ x = (innerAutSL3byGL3 g) ((graphChoiceSL3 ε) (x.map σ))
+    := by
+  rcases transv_to_transv_same_coeff_F F φ with ⟨g, ε, σ, trans2trans⟩
+  use σ, ε, g⁻¹
+  intro M
+  have hM : M ∈ (⊤ : Subgroup (SL3 F)) := Subgroup.mem_top M
+  rw [<-SL3_generated_by_transvections] at hM
+  have inner_inverse : (innerAutSL3byGL3 g)⁻¹ = (innerAutSL3byGL3 g⁻¹) := by
+    ext A i j
+    simp [innerAutSL3byGL3]
+  have graph_involution : (graphChoiceSL3 ε)⁻¹ = graphChoiceSL3 (R:=F) ε := by
+    ext A i j
+    cases ε <;> simp [graphChoiceSL3, invTransposeAutSL3]
+  refine Subgroup.closure_induction ?_ ?_ ?_ ?_ hM
+  · intro A hA
+    simp [TransvectionSetSL3, IsTransvectionSL3] at hA
+    rcases (by exact hA) with ⟨i, j, c, neq, asTransvection⟩
+    have mapped := trans2trans A hA
+    apply (innerAutSL3byGL3 g).injective
+    simp [<-inner_inverse]
+    apply (graphChoiceSL3 ε).injective
+    nth_rw 2 [<-graph_involution]
+    simp
+    exact mapped
+  · simp
+  · intro A B hA hB mapA mapB
+    simp [mapA, mapB]
+  · intro A hA mapA
+    simp [map_inv, mapA]
+
 
 end FieldAutomorpisms
