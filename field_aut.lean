@@ -3055,6 +3055,111 @@ theorem transvection_12_preserved_unique_and_on (φ : AutSL3 F) :
   exact this
 
 
+-- Due to large amount  of exact cases
+set_option maxHeartbeats 250000 in
+theorem transvections_preserved_unique (φ : AutSL3 F) :
+    ∃ (g : GL3 F) (ε : Bool),
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d1SL F))) = d1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d2SL F))) = d2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (d3SL F))) = d3SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w1SL F))) = w1SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (w2SL F))) = w2SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x12SL F))) = x12SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x13SL F))) = x13SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x23SL F))) = x23SL F ∧
+      graphChoiceSL3 ε (innerAutSL3byGL3 g (φ (x32SL' F))) = x32SL' F ∧
+    ∃ (f : F → F), Function.Bijective f ∧ ∀ (i j : Fin 3) (u : F) (h : i ≠ j),
+    (graphChoiceSL3 ε) ((innerAutSL3byGL3 g)
+      (φ (TransvectionSL3 i j u h))) = (TransvectionSL3 i j (f u) h)
+    := by
+  rcases transvection_12_preserved_unique_and_on F φ with
+      ⟨g, ε, hd1, hd2, hd3, hw1, hw2, hx12, hx13, hx23, hx32', find, find'⟩
+  use g, ε
+  simp [*]
+  set f := fun u => (find u).choose with f.def
+  have hf : ∀ u, (graphChoiceSL3 ε) ((innerAutSL3byGL3 g) (φ (TransvectionSL3 0 1 u (by simp)))) =
+      TransvectionSL3 0 1 (f u) (by simp) := by
+    intro u
+    -- Idk how it works
+    exact (find u).choose_spec.1
+  use f
+  constructor
+  -- Bijectivety
+  apply (Function.bijective_iff_existsUnique f).mpr
+  intro b
+  rcases find' b with ⟨a, hA, uniqA⟩
+  use a
+  simp
+  constructor
+  have := entries_gen (hA.symm.trans (hf a)) 0 1
+  simp [TransvectionSL3, transvection, single, of_apply] at this
+  exact this.symm
+  intro y hy
+  have hY := hf y
+  rw [hy] at hY
+  have := uniqA y
+  simp at this
+  exact this hY
+  -- Preserves transvections
+  intro i j u neq
+  have hu := hf u
+  fin_cases i <;> fin_cases j <;> simp at neq <;> simp
+  -- Case 0 1
+  · exact hu
+  -- Case 0 2
+  · have conj : ∀ (c : F), TransvectionSL3 0 2 c (by simp)
+        = (w2SL F)⁻¹ * (TransvectionSL3 0 1 c (by simp)) * (w2SL F)
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w2SL, w2]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+    simp [conj, hf, hw2]
+  -- Case 1 0
+  · have conj : ∀ (c : F), TransvectionSL3 1 0 c (by simp)
+        = (w1SL F)⁻¹ * (TransvectionSL3 0 1 (c) (by simp))⁻¹ * (w1SL F)
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w1SL, w1]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, adjugate_fin_three]
+    simp [conj, hf, hw1]
+  -- Case 1 2
+  · have conj : ∀ (c : F), TransvectionSL3 1 2 c (by simp)
+        = (w1SL F) * (w2SL F) * (TransvectionSL3 0 1 (c) (by simp)) * (w2SL F)⁻¹ * (w1SL F)⁻¹
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w1SL, w1, w2SL, w2]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+    simp [conj, hf, hw1, hw2]
+  -- Case 2 0
+  · have conj : ∀ (c : F), TransvectionSL3 2 0 c (by simp)
+        = (w2SL F) * (w1SL F) * (TransvectionSL3 0 1 (c) (by simp)) * (w1SL F)⁻¹ * (w2SL F)⁻¹
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w1SL, w1, w2SL, w2]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+    simp [conj, hf, hw1, hw2]
+  -- Case 2 1
+  · have conj : ∀ (c : F), TransvectionSL3 2 1 c (by simp)
+        = (w1SL F) * (w2SL F)⁻¹ * (w1SL F)
+          * (TransvectionSL3 0 1 (c) (by simp))
+          * (w1SL F)⁻¹ * (w2SL F) * (w1SL F)⁻¹
+        := by
+      intro c
+      ext i j
+      simp only [TransvectionSL3, transvection, single, w1SL, w1, w2SL, w2]
+      fin_cases i <;> fin_cases j
+        <;> simp [vecMul, vecHead, vecTail, mul_apply, Fin.sum_univ_three, one_apply]
+    simp [conj, hf, hw1, hw2]
+
+
 theorem transv_to_transv_same_coeff (φ : AutSL3 (R)) :
 (φ (d1SL R)  = d1SL R ∧
 φ (d2SL R)  = d2SL R ∧
